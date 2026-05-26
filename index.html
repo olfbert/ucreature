@@ -586,53 +586,59 @@ const SHOP=[
   {id:'omni',icon:'🔮',name:'Omni-Splitter',desc:'Alle Stats +25 dauerhaft',cost:1200,eff:c=>{for(const k of['hp','atk','def','spd','int','lck'])c.stats[k]+=25;}},
 ];
 
-// ===== EXPORT / IMPORT  (export is AES-GCM encrypted — cannot be hand-edited) =====
+// ===== EXPORT / IMPORT =====
 async function exportSave(){
   const c=state.creature;if(!c){notify('Kein Wesen zum Exportieren','error');return;}
-  // Encrypt the whole payload so it cannot be manually edited
   const enc=await encrypt({creature:c,theme:state.theme,exportedAt:new Date().toISOString(),version:4});
-  const blob=new Blob([enc],{type:'text/plain'});
+  // Prefix so we can reliably detect our own files regardless of extension
+  const payload='CA4:'+enc;
+  // Use application/octet-stream so iOS/Android don't rename it to .txt
+  const blob=new Blob([payload],{type:'application/octet-stream'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`${c.name}_CreatureArena.ca`;a.click();
-  URL.revokeObjectURL(url);
-  notify('💾 Verschlüsselt exportiert!');
+  a.href=url;
+  // .dat is neutral, not renamed by mobile browsers
+  a.download=`${c.name}_CreatureArena.dat`;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},300);
+  notify('💾 Exportiert als ' + c.name + '_CreatureArena.dat');
 }
 function importSave(){
   const input=document.createElement('input');
-  input.type='file';input.accept='.ca,.json';
+  input.type='file';
+  // Accept all files — iOS ignores unknown extensions so we use wildcard
+  // Users just pick the .dat file they exported
+  input.accept='*/*';
   input.onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
     try{
-      const text=(await file.text()).trim();
+      const raw=(await file.text()).trim();
       let data=null;
-      // Try decrypting first (.ca file)
-      data=await decrypt(text);
-      // Fallback: plain JSON (old format) — but reject if it looks tampered
-      if(!data){
-        try{
-          const raw=JSON.parse(text);
-          if(raw&&raw.creature){
-            // Sign-check: plain JSON imports are blocked to prevent cheating
-            notify('Alter Speicherstand ohne Verschlüsselung — nicht mehr importierbar.','error');
-            return;
-          }
-        }catch{}
-        notify('Ungültige oder beschädigte Datei!','error');return;
+      // New format: starts with our prefix
+      if(raw.startsWith('CA4:')){
+        data=await decrypt(raw.slice(4));
       }
-      if(!data.creature||!data.creature.id){notify('Ungültige Datei!','error');return;}
-      // Patch missing fields
-      data.creature.evoHistory=data.creature.evoHistory||[];
-      data.creature.evoStage=data.creature.evoStage||0;
-      data.creature.element=data.creature.element||pick(ELEM_KEYS);
-      data.creature.id=data.creature.id||uid();
-      data.creature.rarity=data.creature.rarity||'normal';
-      data.creature.injured=data.creature.injured||false;
-      data.creature.injuredHp=data.creature.injuredHp||null;
-      setState({creature:data.creature,theme:data.theme||'dark',modal:null});
-      await saveGame(data.creature,data.theme||'dark');
-      notify(`✅ ${data.creature.name} importiert!`);
-    }catch(err){notify('Fehler beim Importieren!','error');}
+      if(!data){
+        notify('Ungültige oder nicht-exportierte Datei!','error');
+        return;
+      }
+      if(!data.creature||!data.creature.id){notify('Datei beschädigt!','error');return;}
+      // Patch fields that might be missing in older exports
+      const cr=data.creature;
+      cr.evoHistory=cr.evoHistory||[];
+      cr.evoStage=cr.evoStage||0;
+      cr.element=cr.element||pick(ELEM_KEYS);
+      cr.id=cr.id||uid();
+      cr.rarity=cr.rarity||'normal';
+      cr.injured=cr.injured||false;
+      setState({creature:cr,theme:data.theme||'dark',modal:null});
+      await saveGame(cr,data.theme||'dark');
+      notify(`✅ ${cr.name} erfolgreich geladen!`);
+    }catch(err){
+      console.error('Import error:',err);
+      notify('Fehler beim Importieren: '+err.message,'error');
+    }
   };
   input.click();
 }
@@ -925,11 +931,11 @@ function renderOptions(){
   <div class="card">
     <div class="card-title">💾 Spielstand</div>
     <div class="options-item">
-      <div><div class="options-label">📤 Exportieren</div><div class="options-sub">Als JSON-Datei speichern</div></div>
+      <div><div class="options-label">📤 Exportieren</div><div class="options-sub">Speichert als .dat (verschlüsselt)</div></div>
       <button class="btn btn-green" style="width:auto;margin:0;padding:8px 14px;font-size:13px" onclick="window._export()">Export</button>
     </div>
     <div class="options-item">
-      <div><div class="options-label">📂 Importieren</div><div class="options-sub">JSON-Datei laden</div></div>
+      <div><div class="options-label">📂 Importieren</div><div class="options-sub">Beliebige Datei wählen (.dat)</div></div>
       <button class="btn btn-cyan" style="width:auto;margin:0;padding:8px 14px;font-size:13px" onclick="window._import()">Import</button>
     </div>
     <div class="options-item">
@@ -940,7 +946,7 @@ function renderOptions(){
   <div class="card">
     <div class="card-title">ℹ️ Info</div>
     <div style="font-size:13px;font-weight:700;color:var(--muted);line-height:1.8">
-      CreatureArena v3.1<br>
+      CreatureArena v3<br>
       7 Elemente mit Stärken/Schwächen<br>
       Evolution ab Level 10 (alle 10 Stufen)<br>
       Kämpfe: 5 Min Cooldown<br>
