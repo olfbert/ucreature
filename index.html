@@ -6,594 +6,573 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="CreatureArena">
-<meta name="theme-color" content="#0a0a12">
 <title>CreatureArena</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a12;
-    --surface: #12121e;
-    --card: #1a1a2e;
-    --border: #2a2a4a;
-    --accent: #7c3aed;
-    --accent2: #06b6d4;
-    --accent3: #f59e0b;
-    --accent4: #10b981;
-    --accent5: #ef4444;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --pixel: 'Press Start 2P', monospace;
-    --mono: 'VT323', monospace;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 18px;
-    overflow: hidden;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #root { width: 100%; height: 100%; display: flex; flex-direction: column; }
+/* ===== THEMES ===== */
+[data-theme="dark"] {
+  --bg: #0d0d18;
+  --surface: #161625;
+  --card: #1e1e32;
+  --border: #2e2e50;
+  --accent: #8b5cf6;
+  --accent2: #22d3ee;
+  --accent3: #fbbf24;
+  --accent4: #34d399;
+  --accent5: #f87171;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --muted: #475569;
+  --topbg: #12122a;
+  --navbg: #12122a;
+  --shadow: rgba(0,0,0,0.5);
+  --scan: rgba(0,0,0,0.06);
+}
+[data-theme="light"] {
+  --bg: #f0f4ff;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #dde3f5;
+  --accent: #6d28d9;
+  --accent2: #0891b2;
+  --accent3: #d97706;
+  --accent4: #059669;
+  --accent5: #dc2626;
+  --text: #1e1b4b;
+  --text2: #4338ca;
+  --muted: #6b7280;
+  --topbg: #6d28d9;
+  --navbg: #ffffff;
+  --shadow: rgba(109,40,217,0.15);
+  --scan: transparent;
+}
+[data-theme="nature"] {
+  --bg: #f0fdf4;
+  --surface: #ffffff;
+  --card: #ffffff;
+  --border: #bbf7d0;
+  --accent: #16a34a;
+  --accent2: #0ea5e9;
+  --accent3: #ca8a04;
+  --accent4: #15803d;
+  --accent5: #dc2626;
+  --text: #14532d;
+  --text2: #166534;
+  --muted: #6b7280;
+  --topbg: #166534;
+  --navbg: #ffffff;
+  --shadow: rgba(22,101,52,0.15);
+  --scan: transparent;
+}
+[data-theme="candy"] {
+  --bg: #fdf2f8;
+  --surface: #fff;
+  --card: #fff;
+  --border: #fbcfe8;
+  --accent: #db2777;
+  --accent2: #7c3aed;
+  --accent3: #ea580c;
+  --accent4: #16a34a;
+  --accent5: #dc2626;
+  --text: #831843;
+  --text2: #9d174d;
+  --muted: #9ca3af;
+  --topbg: #db2777;
+  --navbg: #fff;
+  --shadow: rgba(219,39,119,0.15);
+  --scan: transparent;
+}
 
-  /* Scanlines overlay */
-  #root::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.05) 2px,
-      rgba(0,0,0,0.05) 4px
-    );
-    pointer-events: none;
-    z-index: 9999;
-  }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 16px;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+#root { width: 100%; height: 100dvh; display: flex; flex-direction: column; position: relative; }
 
-  .screen {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-  }
+/* scanlines only on dark */
+[data-theme="dark"] #root::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 3px, var(--scan) 3px, var(--scan) 4px);
+  pointer-events: none; z-index: 9999;
+}
 
-  /* TOP BAR */
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 14px;
-    background: var(--surface);
-    border-bottom: 2px solid var(--border);
-    flex-shrink: 0;
-  }
-  .topbar-title {
-    font-family: var(--pixel);
-    font-size: 9px;
-    color: var(--accent);
-    text-shadow: 0 0 10px var(--accent);
-  }
-  .topbar-coins {
-    font-family: var(--pixel);
-    font-size: 8px;
-    color: var(--accent3);
-  }
-  .topbar-level {
-    font-family: var(--pixel);
-    font-size: 8px;
-    color: var(--accent2);
-  }
+.screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
-  /* NAV */
-  .nav {
-    display: flex;
-    background: var(--surface);
-    border-top: 2px solid var(--border);
-    flex-shrink: 0;
-  }
-  .nav-btn {
-    flex: 1;
-    padding: 10px 4px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-    cursor: pointer;
-    border: none;
-    background: none;
-    color: var(--muted);
-    font-family: var(--pixel);
-    font-size: 6px;
-    transition: all 0.15s;
-    position: relative;
-  }
-  .nav-btn.active { color: var(--accent); }
-  .nav-btn.active::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--accent);
-    box-shadow: 0 0 8px var(--accent);
-  }
-  .nav-icon { font-size: 20px; line-height: 1; }
+/* ===== TOPBAR ===== */
+.topbar {
+  background: var(--topbg);
+  padding: 10px 14px 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 12px var(--shadow);
+}
+.topbar-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.topbar-pill {
+  background: rgba(255,255,255,0.2);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.topbar-theme {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  border-radius: 20px;
+  padding: 4px 8px;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 700;
+}
 
-  /* SCROLL AREA */
-  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px; }
-  .scroll::-webkit-scrollbar { width: 4px; }
-  .scroll::-webkit-scrollbar-track { background: var(--bg); }
-  .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+/* ===== SLEEP BANNER ===== */
+.sleep-banner {
+  background: linear-gradient(90deg, #1e3a5f, #1a2a4a);
+  color: #93c5fd;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 2px solid #3b82f6;
+}
+.sleep-banner button {
+  background: #3b82f6;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+}
 
-  /* CARDS */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 12px;
-    margin-bottom: 10px;
-    position: relative;
-    overflow: hidden;
-  }
-  .card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(124,58,237,0.5), transparent);
-  }
-  .card-title {
-    font-family: var(--pixel);
-    font-size: 8px;
-    color: var(--accent2);
-    margin-bottom: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+/* ===== NAV ===== */
+.nav {
+  display: flex;
+  background: var(--navbg);
+  border-top: 2px solid var(--border);
+  flex-shrink: 0;
+  box-shadow: 0 -2px 12px var(--shadow);
+}
+.nav-btn {
+  flex: 1;
+  padding: 8px 4px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  transition: color 0.15s;
+  position: relative;
+}
+.nav-btn.active { color: var(--accent); }
+.nav-btn.active::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 20%; right: 20%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 0 0 3px 3px;
+}
+.nav-icon { font-size: 22px; line-height: 1; }
 
-  /* CREATURE DISPLAY */
-  .creature-stage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 16px;
-    background: radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 70%);
-    border-radius: 4px;
-    margin-bottom: 10px;
-  }
-  .creature-sprite {
-    font-size: 64px;
-    line-height: 1;
-    filter: drop-shadow(0 0 20px rgba(124,58,237,0.8));
-    animation: float 3s ease-in-out infinite;
-    cursor: pointer;
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-  }
-  .creature-name {
-    font-family: var(--pixel);
-    font-size: 11px;
-    color: var(--text);
-    margin-top: 10px;
-    text-align: center;
-  }
-  .creature-title {
-    font-size: 14px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-  .creature-mood {
-    font-size: 13px;
-    color: var(--accent3);
-    margin-top: 4px;
-  }
+/* ===== SCROLL ===== */
+.scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px 12px 4px; }
+.scroll::-webkit-scrollbar { width: 4px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-  /* STAT BARS */
-  .stat-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 7px;
-  }
-  .stat-label {
-    font-family: var(--pixel);
-    font-size: 6px;
-    color: var(--muted);
-    width: 56px;
-    flex-shrink: 0;
-  }
-  .stat-bar {
-    flex: 1;
-    height: 8px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 1px;
-    overflow: hidden;
-    position: relative;
-  }
-  .stat-fill {
-    height: 100%;
-    border-radius: 1px;
-    transition: width 0.5s ease;
-    position: relative;
-  }
-  .stat-fill::after {
-    content: '';
-    position: absolute;
-    right: 0; top: 0; bottom: 0;
-    width: 4px;
-    background: rgba(255,255,255,0.4);
-  }
-  .stat-val {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--text);
-    width: 36px;
-    text-align: right;
-    flex-shrink: 0;
-  }
+/* ===== CARDS ===== */
+.card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 10px var(--shadow);
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--accent);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
-  /* BUTTONS */
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 10px 14px;
-    border: 2px solid;
-    border-radius: 2px;
-    font-family: var(--pixel);
-    font-size: 7px;
-    cursor: pointer;
-    transition: all 0.1s;
-    background: none;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    width: 100%;
-    margin-bottom: 8px;
-    position: relative;
-    overflow: hidden;
-  }
-  .btn::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: currentColor;
-    opacity: 0;
-    transition: opacity 0.1s;
-  }
-  .btn:active::before { opacity: 0.1; }
-  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
-  .btn-purple { color: var(--accent); border-color: var(--accent); }
-  .btn-purple:not(:disabled):hover { box-shadow: 0 0 12px rgba(124,58,237,0.5); }
-  .btn-cyan { color: var(--accent2); border-color: var(--accent2); }
-  .btn-cyan:not(:disabled):hover { box-shadow: 0 0 12px rgba(6,182,212,0.5); }
-  .btn-amber { color: var(--accent3); border-color: var(--accent3); }
-  .btn-amber:not(:disabled):hover { box-shadow: 0 0 12px rgba(245,158,11,0.5); }
-  .btn-green { color: var(--accent4); border-color: var(--accent4); }
-  .btn-green:not(:disabled):hover { box-shadow: 0 0 12px rgba(16,185,129,0.5); }
-  .btn-red { color: var(--accent5); border-color: var(--accent5); }
+/* ===== CREATURE STAGE ===== */
+.creature-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px 12px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  margin-bottom: 10px;
+  box-shadow: 0 4px 20px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+.creature-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(139,92,246,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+.creature-sprite {
+  font-size: 72px;
+  line-height: 1;
+  animation: float 3s ease-in-out infinite;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
+}
+.creature-sprite.sleeping { animation: snooze 4s ease-in-out infinite; }
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+@keyframes snooze {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-4px) rotate(-3deg); }
+}
+.creature-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 12px;
+  color: var(--text);
+  margin-top: 10px;
+  text-align: center;
+  position: relative; z-index: 1;
+}
+.creature-title { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 3px; }
+.creature-mood { font-size: 15px; font-weight: 800; color: var(--accent3); margin-top: 4px; }
+.zzz {
+  position: absolute; top: 12px; right: 14px;
+  font-size: 22px;
+  animation: zzz 2s ease-in-out infinite;
+}
+@keyframes zzz {
+  0%, 100% { opacity: 0.3; transform: translateY(0) scale(0.8); }
+  50% { opacity: 1; transform: translateY(-6px) scale(1.1); }
+}
 
-  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .btn-grid .btn { margin-bottom: 0; }
+/* ===== STAT BARS ===== */
+.stat-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.stat-label {
+  font-size: 12px; font-weight: 800;
+  color: var(--text2);
+  width: 62px; flex-shrink: 0;
+}
+.stat-bar {
+  flex: 1; height: 10px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.stat-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.5s ease;
+}
+.stat-val {
+  font-size: 13px; font-weight: 800;
+  color: var(--text);
+  width: 40px; text-align: right; flex-shrink: 0;
+}
 
-  /* XP BAR */
-  .xp-bar-wrap {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-  .xp-label { font-family: var(--pixel); font-size: 6px; color: var(--accent3); width: 36px; }
-  .xp-bar {
-    flex: 1; height: 10px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 1px;
-    overflow: hidden;
-  }
-  .xp-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent3), #fbbf24);
-    transition: width 0.5s ease;
-  }
-  .xp-text { font-family: var(--pixel); font-size: 6px; color: var(--accent3); width: 56px; text-align: right; }
+/* XP */
+.xp-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 10px;
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+.xp-label { font-size: 12px; font-weight: 900; color: var(--accent3); width: 32px; }
+.xp-bar { flex: 1; height: 12px; background: var(--border); border-radius: 10px; overflow: hidden; }
+.xp-fill { height: 100%; background: linear-gradient(90deg, var(--accent3), #fde68a); border-radius: 10px; transition: width 0.5s; }
+.xp-text { font-size: 12px; font-weight: 800; color: var(--accent3); white-space: nowrap; }
 
-  /* BATTLE */
-  .battle-screen {
-    background: var(--bg);
-    border: 2px solid var(--accent5);
-    border-radius: 4px;
-    padding: 12px;
-    font-family: var(--pixel);
-  }
-  .battle-log {
-    height: 180px;
-    overflow-y: auto;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid var(--border);
-    padding: 8px;
-    font-size: 8px;
-    line-height: 1.8;
-    margin-bottom: 8px;
-    border-radius: 2px;
-  }
-  .battle-log::-webkit-scrollbar { width: 3px; }
-  .battle-log::-webkit-scrollbar-thumb { background: var(--accent5); }
-  .log-you { color: var(--accent2); }
-  .log-enemy { color: var(--accent5); }
-  .log-system { color: var(--accent3); }
-  .log-win { color: var(--accent4); }
-  .log-lose { color: var(--accent5); }
+/* ===== BUTTONS ===== */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.1s, box-shadow 0.1s;
+  width: 100%;
+  margin-bottom: 8px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-purple { background: var(--accent); color: #fff; box-shadow: 0 3px 10px rgba(139,92,246,0.35); }
+.btn-cyan { background: var(--accent2); color: #fff; box-shadow: 0 3px 10px rgba(34,211,238,0.35); }
+.btn-amber { background: var(--accent3); color: #fff; box-shadow: 0 3px 10px rgba(251,191,36,0.35); }
+.btn-green { background: var(--accent4); color: #fff; box-shadow: 0 3px 10px rgba(52,211,153,0.35); }
+.btn-red { background: var(--accent5); color: #fff; box-shadow: 0 3px 10px rgba(248,113,113,0.35); }
+.btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
+.btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn-grid .btn { margin-bottom: 0; }
+.cd-label { font-size: 11px; font-weight: 600; opacity: 0.85; }
 
-  .battle-combatants {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 10px 0;
-  }
-  .combatant { text-align: center; }
-  .combatant-sprite { font-size: 40px; }
-  .combatant-name { font-size: 7px; color: var(--muted); margin-top: 4px; }
-  .combatant-hp {
-    font-size: 8px;
-    margin-top: 2px;
-  }
-  .vs-text { font-size: 14px; color: var(--accent5); text-shadow: 0 0 8px var(--accent5); }
+/* ===== SHOP ===== */
+.shop-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: var(--card);
+}
+.shop-item:active { box-shadow: 0 0 0 3px rgba(139,92,246,0.3); border-color: var(--accent); }
+.shop-item-icon { font-size: 32px; }
+.shop-item-info { flex: 1; }
+.shop-item-name { font-size: 14px; font-weight: 800; color: var(--text); }
+.shop-item-desc { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+.shop-item-price { font-size: 15px; font-weight: 900; color: var(--accent3); white-space: nowrap; }
 
-  /* SHOP */
-  .shop-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  .shop-item:hover { border-color: var(--accent3); }
-  .shop-item-icon { font-size: 28px; }
-  .shop-item-info { flex: 1; }
-  .shop-item-name { font-family: var(--pixel); font-size: 7px; color: var(--text); }
-  .shop-item-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .shop-item-price { font-family: var(--pixel); font-size: 8px; color: var(--accent3); }
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+  backdrop-filter: blur(4px);
+}
+.modal {
+  background: var(--card);
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  padding: 20px;
+  width: 100%; max-width: 400px;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 8px 40px var(--shadow);
+  animation: modalIn 0.2s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+.modal-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  margin-bottom: 14px;
+  text-align: center;
+  line-height: 1.6;
+}
+.modal textarea, .modal input[type="text"] {
+  width: 100%; background: var(--bg);
+  border: 2px solid var(--border); border-radius: 10px;
+  color: var(--text); font-family: 'Nunito', sans-serif;
+  font-size: 14px; font-weight: 600;
+  padding: 10px; resize: vertical; outline: none;
+  margin-bottom: 10px;
+}
+.modal textarea:focus, .modal input:focus { border-color: var(--accent); }
 
-  /* MODAL */
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    padding: 16px;
-  }
-  .modal {
-    background: var(--card);
-    border: 2px solid var(--accent);
-    border-radius: 4px;
-    padding: 16px;
-    width: 100%;
-    max-width: 380px;
-    max-height: 80vh;
-    overflow-y: auto;
-    box-shadow: 0 0 40px rgba(124,58,237,0.4);
-  }
-  .modal-title {
-    font-family: var(--pixel);
-    font-size: 9px;
-    color: var(--accent);
-    margin-bottom: 14px;
-    text-align: center;
-  }
-  .modal textarea, .modal input[type="text"] {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 14px;
-    padding: 8px;
-    resize: vertical;
-    outline: none;
-    margin-bottom: 8px;
-  }
-  .modal textarea:focus, .modal input[type="text"]:focus {
-    border-color: var(--accent);
-  }
-  .modal-close {
-    position: absolute;
-    top: 8px; right: 10px;
-    font-family: var(--pixel);
-    font-size: 8px;
-    color: var(--muted);
-    cursor: pointer;
-    background: none;
-    border: none;
-  }
+/* CODE BOX */
+.code-box {
+  background: var(--bg);
+  border: 2px solid var(--accent);
+  border-radius: 10px;
+  padding: 10px;
+  font-family: monospace;
+  font-size: 11px;
+  word-break: break-all;
+  color: var(--accent2);
+  margin-bottom: 10px;
+  max-height: 100px;
+  overflow-y: auto;
+  line-height: 1.5;
+  user-select: all;
+}
 
-  /* NOTIFICATION */
-  .notif {
-    position: fixed;
-    top: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--card);
-    border: 1px solid var(--accent4);
-    border-radius: 3px;
-    padding: 8px 16px;
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--accent4);
-    z-index: 2000;
-    animation: notifIn 0.2s ease, notifOut 0.3s ease 2s forwards;
-    white-space: nowrap;
-    box-shadow: 0 0 16px rgba(16,185,129,0.4);
-  }
-  .notif.error { border-color: var(--accent5); color: var(--accent5); box-shadow: 0 0 16px rgba(239,68,68,0.4); }
-  .notif.warn { border-color: var(--accent3); color: var(--accent3); box-shadow: 0 0 16px rgba(245,158,11,0.4); }
-  @keyframes notifIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-  @keyframes notifOut { to { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+/* ===== BATTLE ===== */
+.battle-log {
+  height: 200px; overflow-y: auto;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  padding: 10px;
+  font-size: 13px; font-weight: 600;
+  line-height: 1.8;
+  margin-bottom: 10px;
+  border-radius: 12px;
+}
+.battle-log::-webkit-scrollbar { width: 3px; }
+.battle-log::-webkit-scrollbar-thumb { background: var(--accent5); }
+.log-you { color: var(--accent2); }
+.log-enemy { color: var(--accent5); }
+.log-system { color: var(--accent3); font-weight: 800; }
+.log-win { color: var(--accent4); font-weight: 900; }
+.log-lose { color: var(--accent5); font-weight: 900; }
+.battle-combatants { display: flex; justify-content: space-around; align-items: center; padding: 12px 0; }
+.combatant { text-align: center; }
+.combatant-sprite { font-size: 44px; }
+.combatant-name { font-size: 12px; font-weight: 800; color: var(--muted); margin-top: 4px; }
+.combatant-hp { font-size: 13px; font-weight: 800; margin-top: 3px; }
+.vs-text { font-size: 24px; font-weight: 900; color: var(--accent5); }
 
-  /* CREATION SCREEN */
-  .creation-screen {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    text-align: center;
-    background: radial-gradient(ellipse at center, rgba(124,58,237,0.2) 0%, transparent 70%);
-  }
-  .creation-title {
-    font-family: var(--pixel);
-    font-size: 14px;
-    color: var(--accent);
-    text-shadow: 0 0 20px var(--accent);
-    margin-bottom: 8px;
-    line-height: 1.6;
-  }
-  .creation-sub {
-    font-size: 16px;
-    color: var(--muted);
-    margin-bottom: 24px;
-  }
-  .creation-egg {
-    font-size: 80px;
-    margin-bottom: 16px;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px var(--accent)); }
-    50% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--accent)); }
-  }
+/* ===== NOTIFICATION ===== */
+.notif {
+  position: fixed;
+  top: 70px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--card);
+  border: 2px solid var(--accent4);
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 13px; font-weight: 800;
+  color: var(--accent4);
+  z-index: 2000;
+  animation: notifIn 0.2s ease, notifOut 0.3s ease 2.2s forwards;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px var(--shadow);
+  pointer-events: none;
+}
+.notif.error { border-color: var(--accent5); color: var(--accent5); }
+.notif.warn { border-color: var(--accent3); color: var(--accent3); }
+@keyframes notifIn { from { opacity: 0; transform: translateX(-50%) translateY(-12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes notifOut { to { opacity: 0; transform: translateX(-50%) translateY(-12px); } }
 
-  /* WORK ANIMATION */
-  .work-active {
-    animation: shake 0.15s infinite;
-  }
-  @keyframes shake {
-    0%, 100% { transform: rotate(0); }
-    25% { transform: rotate(-5deg) translateY(2px); }
-    75% { transform: rotate(5deg) translateY(2px); }
-  }
+/* ===== CREATION ===== */
+.creation-screen {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px; text-align: center;
+  background: var(--bg);
+}
+.creation-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px; color: var(--accent);
+  margin-bottom: 8px; line-height: 1.8;
+}
+.creation-sub { font-size: 16px; font-weight: 700; color: var(--muted); margin-bottom: 24px; }
+.creation-egg {
+  font-size: 90px; margin-bottom: 16px;
+  animation: pulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 20px rgba(139,92,246,0.5));
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
 
-  /* HISTORY */
-  .history-entry {
-    background: rgba(0,0,0,0.3);
-    border-left: 2px solid var(--accent5);
-    padding: 8px 10px;
-    margin-bottom: 6px;
-    border-radius: 0 2px 2px 0;
-  }
-  .history-entry.win { border-color: var(--accent4); }
-  .history-entry-title { font-family: var(--pixel); font-size: 7px; color: var(--text); }
-  .history-entry-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+/* ===== MISC ===== */
+.section-divider { border: none; border-top: 2px solid var(--border); margin: 10px 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stat-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 8px 12px;
+  font-size: 13px; font-weight: 800; color: var(--text);
+}
+.trait-chip {
+  display: inline-block;
+  background: rgba(139,92,246,0.12);
+  border: 1.5px solid rgba(139,92,246,0.3);
+  border-radius: 20px; padding: 4px 12px;
+  font-size: 13px; font-weight: 700; color: var(--accent);
+  margin: 3px;
+}
+.history-entry {
+  border-left: 3px solid var(--accent5);
+  padding: 8px 10px; margin-bottom: 8px;
+  border-radius: 0 10px 10px 0;
+  background: var(--bg);
+}
+.history-entry.win { border-color: var(--accent4); }
+.history-title { font-size: 14px; font-weight: 900; color: var(--text); }
+.history-sub { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 3px; }
 
-  /* PROGRESS STARS */
-  .stars { color: var(--accent3); letter-spacing: 2px; }
-
-  /* COOLDOWN BADGE */
-  .cooldown {
-    font-family: var(--pixel);
-    font-size: 6px;
-    color: var(--accent5);
-    background: rgba(239,68,68,0.1);
-    border: 1px solid rgba(239,68,68,0.3);
-    border-radius: 2px;
-    padding: 2px 6px;
-    display: inline-block;
-    margin-top: 4px;
-  }
-
-  .section-divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 10px 0;
-  }
-
-  .stat-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 4px 8px;
-    font-family: var(--pixel);
-    font-size: 6px;
-    margin: 2px;
-  }
-
-  .code-box {
-    background: var(--bg);
-    border: 1px solid var(--accent);
-    border-radius: 2px;
-    padding: 8px;
-    font-family: var(--mono);
-    font-size: 12px;
-    word-break: break-all;
-    color: var(--accent2);
-    margin-bottom: 8px;
-    max-height: 80px;
-    overflow-y: auto;
-  }
-
-  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-  .trait-chip {
-    display: inline-block;
-    background: rgba(124,58,237,0.15);
-    border: 1px solid rgba(124,58,237,0.3);
-    border-radius: 2px;
-    padding: 2px 8px;
-    font-size: 13px;
-    color: var(--accent);
-    margin: 2px;
-  }
+.theme-picker {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-bottom: 14px;
+}
+.theme-opt {
+  border-radius: 10px; padding: 10px 6px;
+  font-size: 12px; font-weight: 800;
+  border: 2px solid transparent;
+  cursor: pointer; text-align: center;
+  transition: border-color 0.15s;
+}
+.theme-opt.selected { border-color: var(--accent); }
 </style>
 </head>
 <body>
 <div id="root"></div>
-<script type="module">
+<script>
 // ===== ENCRYPTION =====
-const ENC_KEY = 'CreatureArena_v1_secret_key_2024';
-
 async function getKey() {
-  const raw = new TextEncoder().encode(ENC_KEY);
-  const keyMat = await crypto.subtle.importKey('raw', raw, { name: 'PBKDF2' }, false, ['deriveKey']);
+  const raw = new TextEncoder().encode('CreatureArena_v2_key');
+  const km = await crypto.subtle.importKey('raw', raw, {name:'PBKDF2'}, false, ['deriveKey']);
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt: new TextEncoder().encode('salt_creature'), iterations: 10000, hash: 'SHA-256' },
-    keyMat, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    {name:'PBKDF2', salt: new TextEncoder().encode('ca_salt_v2'), iterations: 10000, hash:'SHA-256'},
+    km, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']
   );
 }
-
 async function encrypt(data) {
   const key = await getKey();
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const enc = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(data)));
+  const enc = await crypto.subtle.encrypt({name:'AES-GCM',iv}, key, new TextEncoder().encode(JSON.stringify(data)));
   const buf = new Uint8Array(iv.length + enc.byteLength);
   buf.set(iv); buf.set(new Uint8Array(enc), iv.length);
   return btoa(String.fromCharCode(...buf));
 }
-
 async function decrypt(b64) {
   try {
     const key = await getKey();
     const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-    const iv = buf.slice(0, 12);
-    const data = buf.slice(12);
-    const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    const dec = await crypto.subtle.decrypt({name:'AES-GCM', iv: buf.slice(0,12)}, key, buf.slice(12));
     return JSON.parse(new TextDecoder().decode(dec));
   } catch { return null; }
 }
@@ -601,27 +580,27 @@ async function decrypt(b64) {
 // ===== INDEXEDDB =====
 let db;
 async function initDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open('CreatureArenaDB', 1);
+  return new Promise((res,rej) => {
+    const req = indexedDB.open('CreatureArenaDB', 2);
     req.onupgradeneeded = e => {
       const d = e.target.result;
-      if (!d.objectStoreNames.contains('save')) d.createObjectStore('save', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('save')) d.createObjectStore('save', {keyPath:'id'});
     };
     req.onsuccess = e => { db = e.target.result; res(); };
     req.onerror = rej;
   });
 }
-async function saveGame(state) {
-  const enc = await encrypt(state);
-  return new Promise((res, rej) => {
-    const tx = db.transaction('save', 'readwrite');
-    tx.objectStore('save').put({ id: 'main', data: enc });
+async function saveGame(creature, theme) {
+  const enc = await encrypt({creature, theme});
+  return new Promise((res,rej) => {
+    const tx = db.transaction('save','readwrite');
+    tx.objectStore('save').put({id:'main', data: enc});
     tx.oncomplete = res; tx.onerror = rej;
   });
 }
 async function loadGame() {
   return new Promise(res => {
-    const tx = db.transaction('save', 'readonly');
+    const tx = db.transaction('save','readonly');
     const req = tx.objectStore('save').get('main');
     req.onsuccess = async e => {
       if (e.target.result) { const d = await decrypt(e.target.result.data); res(d); }
@@ -631,525 +610,448 @@ async function loadGame() {
   });
 }
 
-// ===== CREATURE GENERATION =====
-const PREFIXES = ['Zara','Krix','Veln','Moru','Typh','Drak','Silon','Nexu','Caer','Brix','Feln','Vox','Pyra','Zyru','Kael','Omni','Thyx','Grex','Niru','Plex'];
-const SUFFIXES = ['ath','ox','ix','eon','ura','ax','el','ion','us','ar','yn','eth','oth','um','al','ex','on','is','yx','ur'];
-const TITLES = ['der Wilde','die Stürmerin','der Ewige','das Phantom','der Zerstörer','die Schattenjägerin','der Unsterbliche','das Wesen','der Koloss','die Legende'];
-const EMOJIS = ['🐲','🦄','🐙','🦊','🐺','🦁','🐯','🐻','🦋','🦅','🐬','🦖','🦕','🐉','🦑','🦈','🐊','🦏','🦛','🐘','🦞','🦀','🦩','🦚','🦜'];
-const TRAITS_POOL = ['Hartnäckig','Mutig','Listig','Schnell','Robust','Brilliant','Chaotisch','Präzise','Mystisch','Feurig','Kalt','Elektrisch','Giftig','Heilig','Dunkel'];
-const COLORS = ['#7c3aed','#06b6d4','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#a855f7'];
+// ===== CREATURE GEN =====
+const PREFIXES = ['Zara','Krix','Veln','Moru','Typh','Drak','Silon','Nexu','Caer','Brix','Feln','Vox','Pyra','Zyru','Kael','Omni','Thyx','Grex','Niru','Plex','Auro','Blyx','Cryn','Dryx','Evon'];
+const SUFFIXES = ['ath','ox','ix','eon','ura','ax','el','ion','us','ar','yn','eth','oth','um','al','ex','on','is','yx','ur','ak','en','or','im','os'];
+const TITLES = ['der Wilde','die Stürmerin','der Ewige','das Phantom','der Zerstörer','die Schattenjägerin','der Unsterbliche','das Wesen','der Koloss','die Legende','der Berserker','die Hexe','der Titan','das Orakel'];
+const EMOJIS = ['🐲','🦄','🐙','🦊','🐺','🦁','🐯','🐻','🦋','🦅','🐬','🦖','🦕','🐉','🦑','🦈','🐊','🦏','🦛','🐘','🦞','🦀','🦩','🦚','🦜','🐸','🦔','🦦','🐋','🦬'];
+const TRAITS = ['Hartnäckig','Mutig','Listig','Schnell','Robust','Brilliant','Chaotisch','Präzise','Mystisch','Feurig','Kalt','Elektrisch','Giftig','Heilig','Dunkel','Beharrlich','Aggressiv','Vorsichtig'];
 
-function rng(max, min=0) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-function pick(arr) { return arr[rng(arr.length - 1)]; }
+function rng(max,min=0){return Math.floor(Math.random()*(max-min+1))+min;}
+function pick(arr){return arr[rng(arr.length-1)];}
 
 function generateCreature() {
-  const name = pick(PREFIXES) + pick(SUFFIXES);
-  const emoji = pick(EMOJIS);
-  const color = pick(COLORS);
-  const traits = [];
-  const traitPool = [...TRAITS_POOL];
-  const traitCount = rng(3, 1);
-  for (let i = 0; i < traitCount; i++) {
-    const idx = rng(traitPool.length - 1);
-    traits.push(traitPool.splice(idx, 1)[0]);
-  }
-  // Base stats vary by creature
-  const base = { hp: rng(120, 80), atk: rng(18, 8), def: rng(15, 5), spd: rng(20, 8), int: rng(18, 6), lck: rng(12, 3) };
+  const name = pick(PREFIXES)+pick(SUFFIXES);
+  const traits = [], pool=[...TRAITS];
+  for(let i=0;i<rng(3,1);i++){const idx=rng(pool.length-1);traits.push(pool.splice(idx,1)[0]);}
+  const base = {hp:rng(130,80),atk:rng(20,8),def:rng(16,5),spd:rng(22,8),int:rng(18,6),lck:rng(14,3)};
   return {
-    name, emoji, color,
-    title: pick(TITLES),
-    traits,
-    stats: { ...base },
-    baseStats: { ...base },
-    // Needs
-    hunger: 80, happiness: 80, energy: 80, cleanliness: 80,
-    // Progress
-    level: 1, xp: 0, xpNext: 100, coins: 50,
-    // Training cooldowns
-    cooldowns: {},
-    // Inventory / upgrades
-    upgrades: [],
-    // Battle history
-    battleHistory: [],
-    // Timestamps
-    lastActive: Date.now(),
-    created: Date.now(),
-    // Total stats (base + boosts)
-    statBoosts: { hp: 0, atk: 0, def: 0, spd: 0, int: 0, lck: 0 }
+    name, emoji:pick(EMOJIS), title:pick(TITLES), traits,
+    stats:{...base},
+    hunger:80, happiness:80, energy:80, cleanliness:80,
+    sleeping:false, sleepStart:null,
+    level:1, xp:0, coins:50,
+    cooldowns:{},
+    upgrades:[],
+    battleHistory:[],
+    lastActive:Date.now(),
+    created:Date.now()
   };
 }
 
-function getEffectiveStats(c) {
+function getEffStats(c) {
   return {
-    hp: c.stats.hp + (c.statBoosts?.hp || 0),
-    atk: c.stats.atk + (c.statBoosts?.atk || 0),
-    def: c.stats.def + (c.statBoosts?.def || 0),
-    spd: c.stats.spd + (c.statBoosts?.spd || 0),
-    int: c.stats.int + (c.statBoosts?.int || 0),
-    lck: c.stats.lck + (c.statBoosts?.lck || 0),
+    hp: c.stats.hp,
+    atk: c.stats.atk,
+    def: c.stats.def,
+    spd: c.stats.spd,
+    int: c.stats.int,
+    lck: c.stats.lck
   };
 }
 
 // ===== BATTLE CODE =====
-function generateBattleCode(creature) {
-  const s = getEffectiveStats(creature);
-  const payload = {
-    n: creature.name, e: creature.emoji,
-    l: creature.level, xp: creature.xp,
-    s, t: creature.traits,
-    ts: Date.now()
-  };
-  return btoa(JSON.stringify(payload)).replace(/=/g, '');
+function genCode(c) {
+  const s = getEffStats(c);
+  const p = {n:c.name,e:c.emoji,l:c.level,s,t:c.traits,ts:Date.now()};
+  return btoa(unescape(encodeURIComponent(JSON.stringify(p)))).replace(/=/g,'');
 }
-
-function parseBattleCode(code) {
+function parseCode(code) {
   try {
-    const padded = code + '=='.slice(0, (4 - code.length % 4) % 4);
-    return JSON.parse(atob(padded));
+    const pad = code+'=='.slice(0,(4-code.length%4)%4);
+    return JSON.parse(decodeURIComponent(escape(atob(pad))));
   } catch { return null; }
 }
 
-// ===== BATTLE SIMULATION =====
+// ===== BATTLE SIM =====
 function simulateBattle(you, enemy) {
-  const ys = { ...you.s }; const es = { ...enemy.s };
-  let yHP = ys.hp * 10; let eHP = es.hp * 10;
-  const log = [];
-  let round = 0;
-  log.push({ type: 'system', text: `⚔️ KAMPF: ${you.n} vs ${enemy.n}` });
-  log.push({ type: 'system', text: `━━━━━━━━━━━━━━━━━` });
-
-  while (yHP > 0 && eHP > 0 && round < 50) {
+  const ys={...you.s}, es={...enemy.s};
+  let yHP=ys.hp*10, eHP=es.hp*10;
+  const log=[];
+  log.push({type:'system',text:`⚔️ ${you.n} vs ${enemy.n}`});
+  log.push({type:'system',text:`━━━━━━━━━━━━━━━━━`});
+  let round=0;
+  while(yHP>0&&eHP>0&&round<60){
     round++;
-    // Determine who attacks first based on speed
-    const youFirst = ys.spd + rng(10) >= es.spd + rng(10);
-    const attackers = youFirst ? ['you', 'enemy'] : ['enemy', 'you'];
-    for (const atk of attackers) {
-      if (yHP <= 0 || eHP <= 0) break;
-      if (atk === 'you') {
-        const crit = Math.random() < (ys.lck / 100); 
-        let dmg = Math.max(1, ys.atk + rng(ys.int, 0) - Math.floor(es.def * 0.5));
-        if (crit) { dmg = Math.floor(dmg * 1.8); }
-        eHP -= dmg;
-        log.push({ type: 'you', text: `[R${round}] ${you.n}: ${dmg} Schaden${crit ? ' 💥KRIT!' : ''} (${Math.max(0,eHP)} HP)` });
+    const youFirst=ys.spd+rng(10)>=es.spd+rng(10);
+    for(const atk of (youFirst?['you','enemy']:['enemy','you'])){
+      if(yHP<=0||eHP<=0)break;
+      if(atk==='you'){
+        const crit=Math.random()<(ys.lck/150);
+        let dmg=Math.max(1,ys.atk+rng(Math.floor(ys.int/2),0)-Math.floor(es.def*0.5));
+        if(crit)dmg=Math.floor(dmg*1.75);
+        eHP-=dmg;
+        log.push({type:'you',text:`R${round} ${you.n}: ${dmg} Schaden${crit?' 💥KRIT':''} (Gegner: ${Math.max(0,eHP)}HP)`});
       } else {
-        const crit = Math.random() < (es.lck / 100);
-        let dmg = Math.max(1, es.atk + rng(es.int, 0) - Math.floor(ys.def * 0.5));
-        if (crit) { dmg = Math.floor(dmg * 1.8); }
-        yHP -= dmg;
-        log.push({ type: 'enemy', text: `[R${round}] ${enemy.n}: ${dmg} Schaden${crit ? ' 💥KRIT!' : ''} (${Math.max(0,yHP)} HP)` });
+        const crit=Math.random()<(es.lck/150);
+        let dmg=Math.max(1,es.atk+rng(Math.floor(es.int/2),0)-Math.floor(ys.def*0.5));
+        if(crit)dmg=Math.floor(dmg*1.75);
+        yHP-=dmg;
+        log.push({type:'enemy',text:`R${round} ${enemy.n}: ${dmg} Schaden${crit?' 💥KRIT':''} (Du: ${Math.max(0,yHP)}HP)`});
       }
     }
   }
-  const won = yHP > eHP;
-  log.push({ type: 'system', text: `━━━━━━━━━━━━━━━━━` });
-  log.push({ type: won ? 'win' : 'lose', text: won ? `🏆 ${you.n} GEWINNT!` : `💀 ${enemy.n} GEWINNT!` });
-  return { won, log, rounds: round, yourFinalHP: Math.max(0, yHP), enemyFinalHP: Math.max(0, eHP) };
+  const won=yHP>eHP;
+  log.push({type:'system',text:'━━━━━━━━━━━━━━━━━'});
+  log.push({type:won?'win':'lose',text:won?`🏆 ${you.n} GEWINNT nach ${round} Runden!`:`💀 ${enemy.n} gewinnt nach ${round} Runden.`});
+  return {won,log,rounds:round,yourFinalHP:Math.max(0,yHP),enemyFinalHP:Math.max(0,eHP)};
 }
 
-// ===== MOOD HELPER =====
+// ===== HELPERS =====
 function getMood(c) {
-  const avg = (c.hunger + c.happiness + c.energy + c.cleanliness) / 4;
-  if (avg > 80) return { emoji: '😄', text: 'Glücklich' };
-  if (avg > 60) return { emoji: '😊', text: 'Zufrieden' };
-  if (avg > 40) return { emoji: '😐', text: 'Okay' };
-  if (avg > 20) return { emoji: '😟', text: 'Traurig' };
-  return { emoji: '😫', text: 'Elend' };
+  const avg=(c.hunger+c.happiness+c.energy+c.cleanliness)/4;
+  if(c.sleeping)return{emoji:'😴',text:'Schläft'};
+  if(avg>80)return{emoji:'😄',text:'Glücklich'};
+  if(avg>60)return{emoji:'😊',text:'Zufrieden'};
+  if(avg>40)return{emoji:'😐',text:'Okay'};
+  if(avg>20)return{emoji:'😟',text:'Traurig'};
+  return{emoji:'😫',text:'Elend'};
 }
+function getLevel(xp){return Math.floor(Math.sqrt(xp/50))+1;}
+function xpForLevel(lvl){return(lvl-1)*(lvl-1)*50;}
 
-function getLevel(xp) {
-  return Math.floor(Math.sqrt(xp / 50)) + 1;
-}
-function xpForLevel(lvl) { return (lvl - 1) * (lvl - 1) * 50; }
+const CD={train_atk:30000,train_def:30000,train_spd:25000,train_int:28000,feed:15000,play:20000,work:45000,clean:10000};
+function canDo(action){const cd=state.creature.cooldowns[action];if(!cd)return true;return Date.now()-cd>=CD[action];}
+function cdLeft(action){const cd=state.creature.cooldowns[action];if(!cd)return 0;return Math.max(0,CD[action]-(Date.now()-cd));}
+function fmtCd(ms){if(ms<=0)return'';const s=Math.ceil(ms/1000);if(s<60)return`${s}s`;return`${Math.floor(s/60)}m${s%60}s`;}
 
-// ===== APP STATE =====
-let state = { creature: null, tab: 'home', modal: null, notifications: [], working: false, battleResult: null, battleEnemy: null };
-let saveTimer = null;
+function statColor(k){return{hp:'#34d399',atk:'#f87171',def:'#60a5fa',spd:'#fbbf24',int:'#c084fc',lck:'#f472b6'}[k]||'#fff';}
+function statLabel(k){return{hp:'❤️ HP',atk:'⚔️ ATK',def:'🛡️ DEF',spd:'💨 GES',int:'🧠 INT',lck:'🍀 GLK'}[k]||k;}
 
-function setState(partial) {
-  Object.assign(state, partial);
+// ===== STATE =====
+let state = {creature:null, tab:'home', modal:null, notifications:[], battleResult:null, theme:'dark'};
+let saveTimer=null;
+
+function setState(p) {
+  Object.assign(state, p);
+  if(p.theme) document.documentElement.setAttribute('data-theme', p.theme);
   render();
-  scheduleSave();
+  if(state.creature) {
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(()=>saveGame(state.creature, state.theme),1000);
+  }
 }
 
-function scheduleSave() {
-  if (saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    if (state.creature) saveGame(state.creature);
-  }, 1000);
-}
-
-// ===== NOTIFICATIONS =====
-function notify(msg, type = 'ok') {
-  const id = Date.now();
-  state.notifications.push({ id, msg, type });
+function notify(msg,type='ok'){
+  const id=Date.now()+Math.random();
+  state.notifications.push({id,msg,type});
   render();
-  setTimeout(() => {
-    state.notifications = state.notifications.filter(n => n.id !== id);
-    render();
-  }, 2500);
+  setTimeout(()=>{state.notifications=state.notifications.filter(n=>n.id!==id);render();},2600);
 }
 
-// ===== TRAINING ACTIONS =====
-const COOLDOWNS_MS = { train_atk: 30000, train_def: 30000, train_spd: 25000, train_int: 28000, feed: 15000, play: 20000, work: 45000, clean: 10000, rest: 20000 };
-
-function canDo(action) {
-  const c = state.creature;
-  const cd = c.cooldowns[action];
-  if (!cd) return true;
-  return Date.now() - cd >= COOLDOWNS_MS[action];
+// ===== SLEEP =====
+function startSleep(){
+  const c={...state.creature, sleeping:true, sleepStart:Date.now()};
+  setState({creature:c});
+  notify('😴 Gute Nacht!');
 }
-function cdLeft(action) {
-  const c = state.creature;
-  const cd = c.cooldowns[action];
-  if (!cd) return 0;
-  return Math.max(0, COOLDOWNS_MS[action] - (Date.now() - cd));
-}
-function fmtCd(ms) {
-  if (ms <= 0) return '';
-  const s = Math.ceil(ms / 1000);
-  if (s < 60) return `${s}s`;
-  return `${Math.floor(s/60)}m ${s%60}s`;
+function wakeUp(){
+  const c={...state.creature};
+  if(!c.sleeping)return;
+  const sleptMs=Date.now()-(c.sleepStart||Date.now());
+  const sleptMin=sleptMs/60000;
+  const energyGain=Math.min(100-c.energy, Math.floor(sleptMin*2));
+  c.energy=Math.min(100,c.energy+energyGain+20);
+  c.sleeping=false; c.sleepStart=null;
+  setState({creature:c});
+  notify(`☀️ Aufgewacht! Energie +${energyGain+20}`);
 }
 
-function doAction(action) {
-  if (!canDo(action)) { notify('Noch nicht bereit!', 'warn'); return; }
-  const c = { ...state.creature };
-  c.cooldowns = { ...c.cooldowns, [action]: Date.now() };
-  let gainMsg = '';
+// ===== ACTIONS =====
+function doAction(action){
+  const c={...state.creature};
+  if(c.sleeping){notify('😴 Erst aufwachen!','warn');return;}
+  if(!canDo(action)){notify('Noch Cooldown!','warn');return;}
 
-  if (action === 'train_atk') {
-    const gain = rng(4, 1);
-    c.stats = { ...c.stats, atk: c.stats.atk + gain };
-    gainMsg = `ATK +${gain}`;
-    c.energy = Math.max(0, c.energy - 10);
-    c.hunger = Math.max(0, c.hunger - 8);
-    c.xp += 15;
-  } else if (action === 'train_def') {
-    const gain = rng(4, 1);
-    c.stats = { ...c.stats, def: c.stats.def + gain };
-    gainMsg = `DEF +${gain}`;
-    c.energy = Math.max(0, c.energy - 10);
-    c.hunger = Math.max(0, c.hunger - 8);
-    c.xp += 15;
-  } else if (action === 'train_spd') {
-    const gain = rng(3, 1);
-    c.stats = { ...c.stats, spd: c.stats.spd + gain };
-    gainMsg = `SPD +${gain}`;
-    c.energy = Math.max(0, c.energy - 8);
-    c.hunger = Math.max(0, c.hunger - 6);
-    c.xp += 12;
-  } else if (action === 'train_int') {
-    const gain = rng(3, 1);
-    c.stats = { ...c.stats, int: c.stats.int + gain };
-    gainMsg = `INT +${gain}`;
-    c.energy = Math.max(0, c.energy - 7);
-    c.hunger = Math.max(0, c.hunger - 5);
-    c.xp += 12;
-  } else if (action === 'feed') {
-    c.hunger = Math.min(100, c.hunger + 30);
-    c.happiness = Math.min(100, c.happiness + 5);
-    if (c.coins < 5) { notify('Zu wenig Münzen!', 'error'); return; }
-    c.coins -= 5;
-    gainMsg = `Hunger +30`;
-  } else if (action === 'play') {
-    c.happiness = Math.min(100, c.happiness + 25);
-    c.energy = Math.max(0, c.energy - 10);
-    c.xp += 8;
-    const lckGain = rng(2, 0);
-    if (lckGain) { c.stats = { ...c.stats, lck: c.stats.lck + lckGain }; gainMsg = `Glück +${lckGain}`; }
-    else gainMsg = `Glück +0`;
-    gainMsg = `Happiness +25, LCK ${lckGain > 0 ? '+'+lckGain : '~'}`;
-  } else if (action === 'work') {
-    const earned = rng(40, 15);
-    c.coins += earned;
-    c.energy = Math.max(0, c.energy - 20);
-    c.happiness = Math.max(0, c.happiness - 5);
-    c.xp += 20;
-    gainMsg = `+${earned} 🪙 Münzen`;
-  } else if (action === 'clean') {
-    c.cleanliness = Math.min(100, c.cleanliness + 40);
-    c.happiness = Math.min(100, c.happiness + 5);
-    gainMsg = `Sauberkeit +40`;
-  } else if (action === 'rest') {
-    c.energy = Math.min(100, c.energy + 40);
-    gainMsg = `Energie +40`;
+  // Sleeping-blocked actions
+  const needsAwake=['train_atk','train_def','train_spd','train_int','feed','play','work'];
+  if(c.sleeping&&needsAwake.includes(action)){notify('Erst aufwachen!','warn');return;}
+
+  c.cooldowns={...c.cooldowns,[action]:Date.now()};
+  let msg='';
+
+  if(action==='train_atk'){
+    const g=rng(4,1);c.stats={...c.stats,atk:c.stats.atk+g};
+    c.energy=Math.max(0,c.energy-12);c.hunger=Math.max(0,c.hunger-10);c.xp+=15;msg=`⚔️ ATK +${g}`;
+  }else if(action==='train_def'){
+    const g=rng(4,1);c.stats={...c.stats,def:c.stats.def+g};
+    c.energy=Math.max(0,c.energy-12);c.hunger=Math.max(0,c.hunger-10);c.xp+=15;msg=`🛡️ DEF +${g}`;
+  }else if(action==='train_spd'){
+    const g=rng(3,1);c.stats={...c.stats,spd:c.stats.spd+g};
+    c.energy=Math.max(0,c.energy-9);c.hunger=Math.max(0,c.hunger-7);c.xp+=12;msg=`💨 GES +${g}`;
+  }else if(action==='train_int'){
+    const g=rng(3,1);c.stats={...c.stats,int:c.stats.int+g};
+    c.energy=Math.max(0,c.energy-8);c.hunger=Math.max(0,c.hunger-6);c.xp+=12;msg=`🧠 INT +${g}`;
+  }else if(action==='feed'){
+    if(c.coins<5){notify('Zu wenig Münzen!','error');return;}
+    c.hunger=Math.min(100,c.hunger+30);c.happiness=Math.min(100,c.happiness+5);c.coins-=5;msg='🍖 Hunger +30';
+  }else if(action==='play'){
+    c.happiness=Math.min(100,c.happiness+25);c.energy=Math.max(0,c.energy-10);c.xp+=8;
+    const g=rng(2,0);if(g)c.stats={...c.stats,lck:c.stats.lck+g};
+    msg=`🎮 Glück +25${g?', LCK +'+g:''}`;
+  }else if(action==='work'){
+    const earned=rng(40,15);c.coins+=earned;
+    c.energy=Math.max(0,c.energy-20);c.happiness=Math.max(0,c.happiness-5);c.xp+=20;
+    msg=`⚒️ +${earned} Münzen verdient!`;
+  }else if(action==='clean'){
+    c.cleanliness=Math.min(100,c.cleanliness+40);c.happiness=Math.min(100,c.happiness+5);msg='🚿 Sauberkeit +40';
   }
 
-  // Check level up
-  const newLevel = getLevel(c.xp);
-  if (newLevel > c.level) {
-    c.level = newLevel;
-    notify(`🎉 LEVEL UP! Level ${newLevel}!`, 'ok');
-    // Bonus stats on level up
-    c.stats = {
-      hp: c.stats.hp + rng(5, 2),
-      atk: c.stats.atk + rng(2, 0),
-      def: c.stats.def + rng(2, 0),
-      spd: c.stats.spd + rng(2, 0),
-      int: c.stats.int + rng(2, 0),
-      lck: c.stats.lck + rng(1, 0),
-    };
+  const newLvl=getLevel(c.xp);
+  if(newLvl>c.level){
+    c.level=newLvl;
+    c.stats={hp:c.stats.hp+rng(6,2),atk:c.stats.atk+rng(2,0),def:c.stats.def+rng(2,0),spd:c.stats.spd+rng(2,0),int:c.stats.int+rng(2,0),lck:c.stats.lck+rng(1,0)};
+    notify(`🎉 LEVEL UP! Jetzt Level ${newLvl}!`);
   }
-
-  c.lastActive = Date.now();
-  setState({ creature: c });
-  if (gainMsg) notify(gainMsg, 'ok');
+  c.lastActive=Date.now();
+  setState({creature:c});
+  if(msg)notify(msg);
 }
 
-// Passive decay
-function applyDecay() {
-  if (!state.creature) return;
-  const c = { ...state.creature };
-  const elapsed = (Date.now() - (c.lastActive || Date.now())) / 1000 / 60; // minutes
-  if (elapsed < 1) return;
-  const decay = Math.floor(elapsed * 0.5);
-  c.hunger = Math.max(0, c.hunger - decay);
-  c.happiness = Math.max(0, c.happiness - Math.floor(decay * 0.5));
-  c.energy = Math.min(100, c.energy + Math.floor(decay * 0.3));
-  c.cleanliness = Math.max(0, c.cleanliness - Math.floor(decay * 0.3));
-  c.lastActive = Date.now();
-  setState({ creature: c });
+function applyDecay(){
+  if(!state.creature||state.creature.sleeping)return;
+  const c={...state.creature};
+  const mins=(Date.now()-(c.lastActive||Date.now()))/60000;
+  if(mins<1)return;
+  const d=Math.floor(mins*0.5);
+  c.hunger=Math.max(0,c.hunger-d);
+  c.happiness=Math.max(0,c.happiness-Math.floor(d*0.4));
+  c.cleanliness=Math.max(0,c.cleanliness-Math.floor(d*0.3));
+  c.lastActive=Date.now();
+  setState({creature:c});
 }
 
 // ===== SHOP =====
-const SHOP_ITEMS = [
-  { id: 'protein', icon: '🥩', name: 'Protein-Pack', desc: 'ATK +10, DEF +5 permanent', cost: 150, effect: (c) => { c.stats.atk += 10; c.stats.def += 5; } },
-  { id: 'speedshoes', icon: '👟', name: 'Turbo-Schuhe', desc: 'SPD +15 permanent', cost: 120, effect: (c) => { c.stats.spd += 15; } },
-  { id: 'brainpill', icon: '💊', name: 'Gehirn-Boost', desc: 'INT +12, LCK +5 permanent', cost: 130, effect: (c) => { c.stats.int += 12; c.stats.lck += 5; } },
-  { id: 'armor', icon: '🛡️', name: 'Titan-Rüstung', desc: 'DEF +20 permanent', cost: 200, effect: (c) => { c.stats.def += 20; } },
-  { id: 'elixir', icon: '✨', name: 'Lebens-Elixier', desc: 'HP +30 permanent', cost: 180, effect: (c) => { c.stats.hp += 30; } },
-  { id: 'luckcharm', icon: '🍀', name: 'Glücks-Amulett', desc: 'LCK +20 permanent', cost: 160, effect: (c) => { c.stats.lck += 20; } },
-  { id: 'megaboost', icon: '💎', name: 'Mega-Boost', desc: 'Alle Stats +10 permanent', cost: 500, effect: (c) => { for (const k of ['hp','atk','def','spd','int','lck']) c.stats[k] += 10; } },
-  { id: 'omnishard', icon: '🔮', name: 'Omni-Splitter', desc: 'Alle Stats +25 permanent', cost: 1200, effect: (c) => { for (const k of ['hp','atk','def','spd','int','lck']) c.stats[k] += 25; } },
+const SHOP=[
+  {id:'protein',icon:'🥩',name:'Protein-Pack',desc:'ATK +10, DEF +5 dauerhaft',cost:150,eff:c=>{c.stats.atk+=10;c.stats.def+=5;}},
+  {id:'speedshoes',icon:'👟',name:'Turbo-Schuhe',desc:'GES +15 dauerhaft',cost:120,eff:c=>{c.stats.spd+=15;}},
+  {id:'brainpill',icon:'💊',name:'Gehirn-Boost',desc:'INT +12, GLK +5 dauerhaft',cost:130,eff:c=>{c.stats.int+=12;c.stats.lck+=5;}},
+  {id:'armor',icon:'🛡️',name:'Titan-Rüstung',desc:'DEF +20 dauerhaft',cost:200,eff:c=>{c.stats.def+=20;}},
+  {id:'elixir',icon:'✨',name:'Lebens-Elixier',desc:'HP +30 dauerhaft',cost:180,eff:c=>{c.stats.hp+=30;}},
+  {id:'luckcharm',icon:'🍀',name:'Glücks-Amulett',desc:'GLK +20 dauerhaft',cost:160,eff:c=>{c.stats.lck+=20;}},
+  {id:'mega',icon:'💎',name:'Mega-Boost',desc:'Alle Stats +10 dauerhaft',cost:500,eff:c=>{for(const k of['hp','atk','def','spd','int','lck'])c.stats[k]+=10;}},
+  {id:'omni',icon:'🔮',name:'Omni-Splitter',desc:'Alle Stats +25 dauerhaft',cost:1200,eff:c=>{for(const k of['hp','atk','def','spd','int','lck'])c.stats[k]+=25;}},
 ];
 
 // ===== RENDER =====
-function formatStat(val) { return Math.floor(val).toString().padStart(4, ' '); }
-function statColor(key) {
-  return { hp: '#10b981', atk: '#ef4444', def: '#3b82f6', spd: '#f59e0b', int: '#8b5cf6', lck: '#ec4899' }[key] || '#fff';
-}
-function statLabel(key) {
-  return { hp: 'HP', atk: 'ATK', def: 'DEF', spd: 'GES', int: 'INT', lck: 'GLK' }[key] || key;
-}
-
-function render() {
-  const root = document.getElementById('root');
-  if (!state.creature) { renderCreation(root); return; }
+function render(){
+  const root=document.getElementById('root');
+  if(!state.creature){renderCreation(root);return;}
   renderMain(root);
 }
 
-function renderCreation(root) {
-  root.innerHTML = `
-  <div class="screen">
+function renderCreation(root){
+  root.innerHTML=`
+  <div class="screen" style="background:var(--bg)">
     <div class="creation-screen">
       <div class="creation-egg">🥚</div>
       <div class="creation-title">CREATURE<br>ARENA</div>
-      <div class="creation-sub">Dein einzigartiges Wesen wartet auf dich</div>
-      <button class="btn btn-purple" style="max-width:260px;font-size:9px;padding:16px;" onclick="window._startGame()">
-        ⚡ WESEN ERSCHAFFEN
+      <div class="creation-sub">Dein einzigartiges Wesen wartet auf dich!</div>
+      <div style="margin-bottom:16px;width:100%;max-width:280px">
+        <div style="font-size:13px;font-weight:800;color:var(--muted);margin-bottom:8px;text-align:center">Design wählen:</div>
+        <div class="theme-picker">
+          <div class="theme-opt ${state.theme==='dark'?'selected':''}" style="background:#1e1e32;color:#8b5cf6;border-color:${state.theme==='dark'?'#8b5cf6':'#2e2e50'}" onclick="window._setTheme('dark')">🌙<br>Dark</div>
+          <div class="theme-opt ${state.theme==='light'?'selected':''}" style="background:#ede9fe;color:#6d28d9;border-color:${state.theme==='light'?'#6d28d9':'#dde3f5'}" onclick="window._setTheme('light')">☀️<br>Hell</div>
+          <div class="theme-opt ${state.theme==='nature'?'selected':''}" style="background:#dcfce7;color:#16a34a;border-color:${state.theme==='nature'?'#16a34a':'#bbf7d0'}" onclick="window._setTheme('nature')">🌿<br>Natur</div>
+          <div class="theme-opt ${state.theme==='candy'?'selected':''}" style="background:#fce7f3;color:#db2777;border-color:${state.theme==='candy'?'#db2777':'#fbcfe8'}" onclick="window._setTheme('candy')">🍭<br>Candy</div>
+        </div>
+      </div>
+      <button class="btn btn-purple" style="max-width:260px;font-size:15px;padding:16px" onclick="window._startGame()">
+        ⚡ Wesen erschaffen!
       </button>
     </div>
   </div>`;
-  window._startGame = () => {
-    const c = generateCreature();
-    setState({ creature: c, tab: 'home' });
-    saveGame(c);
-    notify(`${c.name} wurde erschaffen! 🎉`);
+  window._setTheme=(t)=>{setState({theme:t});};
+  window._startGame=()=>{
+    const c=generateCreature();
+    setState({creature:c,tab:'home'});
+    saveGame(c,state.theme);
+    notify(`${c.emoji} ${c.name} wurde erschaffen!`);
   };
 }
 
-function renderMain(root) {
-  const c = state.creature;
-  const mood = getMood(c);
-  const eff = getEffectiveStats(c);
-  const xpCur = c.xp - xpForLevel(c.level);
-  const xpNxt = xpForLevel(c.level + 1) - xpForLevel(c.level);
-  const tabs = [
-    { id: 'home', icon: '🏠', label: 'HOME' },
-    { id: 'train', icon: '💪', label: 'TRAIN' },
-    { id: 'shop', icon: '🛒', label: 'SHOP' },
-    { id: 'battle', icon: '⚔️', label: 'KAMPF' },
-    { id: 'stats', icon: '📊', label: 'STATS' },
+function renderMain(root){
+  const c=state.creature;
+  const mood=getMood(c);
+  const eff=getEffStats(c);
+  const xpCur=c.xp-xpForLevel(c.level);
+  const xpNxt=xpForLevel(c.level+1)-xpForLevel(c.level);
+
+  const tabs=[
+    {id:'home',icon:'🏠',label:'Home'},
+    {id:'train',icon:'💪',label:'Training'},
+    {id:'shop',icon:'🛒',label:'Shop'},
+    {id:'battle',icon:'⚔️',label:'Kampf'},
+    {id:'stats',icon:'📊',label:'Stats'},
   ];
 
-  let content = '';
-  if (state.tab === 'home') content = renderHome(c, mood, eff, xpCur, xpNxt);
-  else if (state.tab === 'train') content = renderTrain(c);
-  else if (state.tab === 'shop') content = renderShop(c);
-  else if (state.tab === 'battle') content = renderBattle(c);
-  else if (state.tab === 'stats') content = renderStats(c, eff);
+  let content='';
+  if(state.tab==='home')content=renderHome(c,mood,eff,xpCur,xpNxt);
+  else if(state.tab==='train')content=renderTrain(c,eff);
+  else if(state.tab==='shop')content=renderShop(c);
+  else if(state.tab==='battle')content=renderBattle(c);
+  else if(state.tab==='stats')content=renderStats(c,eff);
 
-  const notifs = state.notifications.map(n => `<div class="notif ${n.type === 'error' ? 'error' : n.type === 'warn' ? 'warn' : ''}">${n.msg}</div>`).join('');
+  const notifs=state.notifications.map(n=>`<div class="notif ${n.type==='error'?'error':n.type==='warn'?'warn':''}">${n.msg}</div>`).join('');
+  const sleepBanner=c.sleeping?`<div class="sleep-banner">😴 ${c.name} schläft gerade... <button onclick="window._wakeUp()">Aufwecken ☀️</button></div>`:'';
 
-  root.innerHTML = `
+  root.innerHTML=`
   <div class="screen">
     <div class="topbar">
-      <div class="topbar-title">🔮 ${c.name.toUpperCase()}</div>
-      <div class="topbar-level">LVL ${c.level}</div>
-      <div class="topbar-coins">🪙 ${c.coins}</div>
+      <div class="topbar-name">${c.emoji} ${c.name.toUpperCase()}</div>
+      <div class="topbar-pill">⭐ ${c.level}</div>
+      <div class="topbar-pill">🪙 ${c.coins}</div>
+      <button class="topbar-theme" onclick="window._themeModal()">🎨</button>
     </div>
+    ${sleepBanner}
     <div class="scroll">${content}</div>
     <nav class="nav">
-      ${tabs.map(t => `
-        <button class="nav-btn ${state.tab === t.id ? 'active' : ''}" onclick="window._tab('${t.id}')">
-          <span class="nav-icon">${t.icon}</span>
-          ${t.label}
-        </button>`).join('')}
+      ${tabs.map(t=>`<button class="nav-btn ${state.tab===t.id?'active':''}" onclick="window._tab('${t.id}')"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}
     </nav>
   </div>
   ${notifs}
-  ${state.modal ? renderModal() : ''}`;
+  ${state.modal?renderModal():''}`;
 
-  // Attach events
-  window._tab = (t) => setState({ tab: t });
   attachEvents();
 }
 
-function renderHome(c, mood, eff, xpCur, xpNxt) {
-  const bars = Object.entries({ hunger: ['🍖', '#f97316'], happiness: ['😊', '#ec4899'], energy: ['⚡', '#eab308'], cleanliness: ['🚿', '#06b6d4'] });
+function renderHome(c,mood,eff,xpCur,xpNxt){
+  const needBars=[
+    {key:'hunger',icon:'🍖',label:'Hunger',color:'#f97316'},
+    {key:'happiness',icon:'😊',label:'Glück',color:'#ec4899'},
+    {key:'energy',icon:'⚡',label:'Energie',color:'#eab308'},
+    {key:'cleanliness',icon:'🚿',label:'Hygiene',color:'#06b6d4'},
+  ];
+  const asleep=c.sleeping;
   return `
   <div class="creature-stage">
-    <div class="creature-sprite" id="mainSprite" style="color:${c.color}" onclick="window._petCreature()">${c.emoji}</div>
+    ${asleep?'<div class="zzz">💤</div>':''}
+    <div class="creature-sprite ${asleep?'sleeping':''}" onclick="window._pet()">${c.emoji}</div>
     <div class="creature-name">${c.name}</div>
     <div class="creature-title">${c.title}</div>
     <div class="creature-mood">${mood.emoji} ${mood.text}</div>
   </div>
 
-  <div class="xp-bar-wrap">
+  <div class="xp-row">
     <div class="xp-label">XP</div>
     <div class="xp-bar"><div class="xp-fill" style="width:${Math.min(100,(xpCur/xpNxt)*100)}%"></div></div>
     <div class="xp-text">${xpCur}/${xpNxt}</div>
   </div>
 
   <div class="card">
-    <div class="card-title">Zustand</div>
-    ${bars.map(([key, [icon, color]]) => `
+    <div class="card-title">📊 Zustand</div>
+    ${needBars.map(b=>`
     <div class="stat-row">
-      <div class="stat-label">${icon} ${key === 'hunger' ? 'Hunger' : key === 'happiness' ? 'Glück' : key === 'energy' ? 'Energie' : 'Hygiene'}</div>
-      <div class="stat-bar"><div class="stat-fill" style="width:${c[key]}%;background:${color}"></div></div>
-      <div class="stat-val">${Math.floor(c[key])}</div>
+      <div class="stat-label">${b.icon} ${b.label}</div>
+      <div class="stat-bar"><div class="stat-fill" style="width:${c[b.key]}%;background:${b.color}"></div></div>
+      <div class="stat-val">${Math.floor(c[b.key])}</div>
     </div>`).join('')}
   </div>
 
   <div class="card">
-    <div class="card-title">Schnellaktionen</div>
-    <div class="btn-grid">
-      <button class="btn btn-amber ${!canDo('feed') ? '' : ''}" onclick="window._do('feed')" ${!canDo('feed') ? 'disabled' : ''}>
-        🍖 Füttern${!canDo('feed') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('feed'))}</span>` : ''}
+    <div class="card-title">⚡ Aktionen</div>
+    ${asleep?`<div style="text-align:center;padding:12px;font-size:14px;font-weight:700;color:var(--muted)">😴 ${c.name} schläft... erst aufwecken!</div>`:`
+    <div class="btn-grid" style="margin-bottom:8px">
+      <button class="btn btn-amber" onclick="window._do('feed')" ${!canDo('feed')?'disabled':''}>
+        🍖 Füttern${!canDo('feed')?`<span class="cd-label"> ${fmtCd(cdLeft('feed'))}</span>`:''}
       </button>
-      <button class="btn btn-cyan" onclick="window._do('play')" ${!canDo('play') ? 'disabled' : ''}>
-        🎮 Spielen${!canDo('play') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('play'))}</span>` : ''}
+      <button class="btn btn-cyan" onclick="window._do('play')" ${!canDo('play')?'disabled':''}>
+        🎮 Spielen${!canDo('play')?`<span class="cd-label"> ${fmtCd(cdLeft('play'))}</span>`:''}
       </button>
-      <button class="btn btn-green" onclick="window._do('work')" ${!canDo('work') ? 'disabled' : ''}>
-        ⚒️ Arbeiten${!canDo('work') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('work'))}</span>` : ''}
+      <button class="btn btn-green" onclick="window._do('work')" ${!canDo('work')?'disabled':''}>
+        ⚒️ Arbeiten${!canDo('work')?`<span class="cd-label"> ${fmtCd(cdLeft('work'))}</span>`:''}
       </button>
-      <button class="btn btn-purple" onclick="window._do('rest')" ${!canDo('rest') ? 'disabled' : ''}>
-        😴 Schlafen${!canDo('rest') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('rest'))}</span>` : ''}
+      <button class="btn btn-outline" onclick="window._do('clean')" ${!canDo('clean')?'disabled':''}>
+        🚿 Waschen${!canDo('clean')?`<span class="cd-label"> ${fmtCd(cdLeft('clean'))}</span>`:''}
       </button>
     </div>
-    <button class="btn btn-cyan" onclick="window._do('clean')" ${!canDo('clean') ? 'disabled' : ''}>
-      🚿 Waschen ${!canDo('clean') ? fmtCd(cdLeft('clean')) : ''}
-    </button>
+    <button class="btn btn-purple" onclick="window._sleep()">😴 Schlafen legen</button>`}
   </div>
 
-  ${c.traits.length ? `
-  <div class="card">
-    <div class="card-title">Eigenschaften</div>
-    ${c.traits.map(t => `<span class="trait-chip">${t}</span>`).join('')}
-  </div>` : ''}`;
+  ${c.traits.length?`<div class="card"><div class="card-title">✨ Eigenschaften</div>${c.traits.map(t=>`<span class="trait-chip">${t}</span>`).join('')}</div>`:''}
+  <div style="height:8px"></div>`;
 }
 
-function renderTrain(c) {
-  const actions = [
-    { id: 'train_atk', icon: '⚔️', label: 'ATK Trainieren', desc: 'Erhöht Angriffskraft', color: 'btn-red' },
-    { id: 'train_def', icon: '🛡️', label: 'DEF Trainieren', desc: 'Erhöht Verteidigung', color: 'btn-cyan' },
-    { id: 'train_spd', icon: '💨', label: 'GES Trainieren', desc: 'Erhöht Geschwindigkeit', color: 'btn-amber' },
-    { id: 'train_int', icon: '🧠', label: 'INT Trainieren', desc: 'Erhöht Intelligenz', color: 'btn-purple' },
+function renderTrain(c,eff){
+  const asleep=c.sleeping;
+  const actions=[
+    {id:'train_atk',icon:'⚔️',label:'ATK Training',cls:'btn-red'},
+    {id:'train_def',icon:'🛡️',label:'DEF Training',cls:'btn-cyan'},
+    {id:'train_spd',icon:'💨',label:'Geschwindigkeit',cls:'btn-amber'},
+    {id:'train_int',icon:'🧠',label:'Intelligenz',cls:'btn-purple'},
   ];
   return `
   <div class="card">
-    <div class="card-title">⚡ Training</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Training kostet Energie & Hunger. Stats wachsen unbegrenzt!</div>
-    ${actions.map(a => `
-    <button class="btn ${a.color}" onclick="window._do('${a.id}')" ${!canDo(a.id) ? 'disabled' : ''}>
-      ${a.icon} ${a.label} ${!canDo(a.id) ? '· ' + fmtCd(cdLeft(a.id)) : ''}
+    <div class="card-title">💪 Training</div>
+    ${asleep?`<div style="text-align:center;padding:12px;font-size:14px;font-weight:700;color:var(--muted)">😴 ${c.name} schläft — kann nicht trainieren!</div>`:
+    actions.map(a=>`
+    <button class="btn ${a.cls}" onclick="window._do('${a.id}')" ${(!canDo(a.id)||asleep)?'disabled':''}>
+      ${a.icon} ${a.label}${!canDo(a.id)?` — ${fmtCd(cdLeft(a.id))}`:''}
     </button>`).join('')}
   </div>
   <div class="card">
-    <div class="card-title">📈 Aktuelle Stats</div>
-    ${Object.entries(getEffectiveStats(c)).map(([k, v]) => `
+    <div class="card-title">📈 Kampfwerte</div>
+    ${Object.entries(eff).map(([k,v])=>`
     <div class="stat-row">
       <div class="stat-label">${statLabel(k)}</div>
-      <div class="stat-bar">
-        <div class="stat-fill" style="width:${Math.min(100,(v/300)*100)}%;background:${statColor(k)}"></div>
-      </div>
+      <div class="stat-bar"><div class="stat-fill" style="width:${Math.min(100,(v/350)*100)}%;background:${statColor(k)}"></div></div>
       <div class="stat-val">${Math.floor(v)}</div>
     </div>`).join('')}
-    <div style="font-size:11px;color:var(--muted);margin-top:6px">Kein Maximum — wachse für immer!</div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:6px">Kein Maximum — wachse für immer! 🚀</div>
   </div>`;
 }
 
-function renderShop(c) {
+function renderShop(c){
   return `
   <div class="card">
-    <div class="card-title">🛒 Shop · 🪙 ${c.coins} Münzen</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Permanente Stat-Boosts für dein Wesen</div>
-    ${SHOP_ITEMS.map(item => `
+    <div class="card-title">🛒 Shop</div>
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px">Dein Guthaben: <strong style="color:var(--accent3)">🪙 ${c.coins}</strong></div>
+    ${SHOP.map(item=>`
     <div class="shop-item" onclick="window._buy('${item.id}')">
       <div class="shop-item-icon">${item.icon}</div>
       <div class="shop-item-info">
         <div class="shop-item-name">${item.name}</div>
         <div class="shop-item-desc">${item.desc}</div>
       </div>
-      <div class="shop-item-price">🪙${item.cost}</div>
+      <div class="shop-item-price">🪙 ${item.cost}</div>
     </div>`).join('')}
   </div>
-  ${c.upgrades.length ? `
-  <div class="card">
-    <div class="card-title">✅ Gekauft</div>
-    ${c.upgrades.map(u => `<div style="font-size:13px;color:var(--accent4)">✓ ${u}</div>`).join('')}
-  </div>` : ''}`;
+  ${c.upgrades.length?`<div class="card"><div class="card-title">✅ Gekauft</div>${c.upgrades.map(u=>`<div style="font-size:14px;font-weight:700;color:var(--accent4);padding:2px 0">✓ ${u}</div>`).join('')}</div>`:''}`;
 }
 
-function renderBattle(c) {
-  if (state.battleResult) return renderBattleResult();
+function renderBattle(c){
+  if(state.battleResult)return renderBattleResult();
   return `
   <div class="card">
     <div class="card-title">⚔️ Kampfsystem</div>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Generiere deinen Kampfcode und teile ihn. Gib den Code des Gegners ein um zu kämpfen!</div>
-    
-    <button class="btn btn-purple" onclick="window._showCode()">
-      📋 Meinen Kampfcode anzeigen
-    </button>
-    <button class="btn btn-red" onclick="window._openFight()">
-      ⚔️ Gegner herausfordern
-    </button>
+    <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:12px">
+      Teile deinen Kampfcode mit dem Gegner.<br>Gib dessen Code ein und kämpfe automatisch!
+    </div>
+    <button class="btn btn-purple" onclick="window._showCode()">📋 Meinen Kampfcode anzeigen</button>
+    <button class="btn btn-red" onclick="window._openFight()">⚔️ Gegner herausfordern</button>
   </div>
-
-  ${c.battleHistory.length ? `
+  ${c.battleHistory.length?`
   <div class="card">
     <div class="card-title">📜 Kampfhistorie</div>
-    ${c.battleHistory.slice().reverse().slice(0, 10).map(b => `
-    <div class="history-entry ${b.won ? 'win' : ''}">
-      <div class="history-entry-title">${b.won ? '🏆 SIEG' : '💀 NIEDERLAGE'} vs ${b.enemyName} ${b.enemyEmoji}</div>
-      <div class="history-entry-sub">Lvl ${b.enemyLevel} · +${b.xpGained} XP · ${new Date(b.time).toLocaleDateString('de')}</div>
-      <div class="history-entry-sub" style="font-size:11px;color:var(--muted)">
-        Gegner Stats: ATK ${b.enemyStats.atk} DEF ${b.enemyStats.def} SPD ${b.enemyStats.spd}
-      </div>
+    ${c.battleHistory.slice().reverse().slice(0,10).map(b=>`
+    <div class="history-entry ${b.won?'win':''}">
+      <div class="history-title">${b.won?'🏆 SIEG':'💀 NIEDERLAGE'} — ${b.enemyEmoji} ${b.enemyName}</div>
+      <div class="history-sub">Level ${b.enemyLevel} · +${b.xpGained} XP · ${new Date(b.time).toLocaleDateString('de')}</div>
+      <div class="history-sub">Gegner: ATK ${b.enemyStats.atk} DEF ${b.enemyStats.def} GES ${b.enemyStats.spd}</div>
     </div>`).join('')}
-  </div>` : ''}`;
+  </div>`:''}`;
 }
 
-function renderBattleResult() {
-  const { result, enemy } = state.battleResult;
+function renderBattleResult(){
+  const {result,enemy}=state.battleResult;
   return `
-  <div class="battle-screen">
-    <div style="font-family:var(--pixel);font-size:9px;color:var(--accent5);text-align:center;margin-bottom:10px">⚔️ KAMPFBERICHT ⚔️</div>
+  <div class="card" style="border-color:var(--accent5)">
+    <div class="card-title" style="color:var(--accent5);justify-content:center">⚔️ KAMPFBERICHT</div>
     <div class="battle-combatants">
       <div class="combatant">
         <div class="combatant-sprite">${state.creature.emoji}</div>
         <div class="combatant-name">${state.creature.name}</div>
-        <div class="combatant-hp" style="color:var(--accent2)">HP: ${result.yourFinalHP}</div>
+        <div class="combatant-hp" style="color:var(--accent4)">HP: ${result.yourFinalHP}</div>
       </div>
       <div class="vs-text">VS</div>
       <div class="combatant">
@@ -1159,74 +1061,97 @@ function renderBattleResult() {
       </div>
     </div>
     <div class="battle-log" id="battleLog">
-      ${result.log.map(l => `<div class="log-${l.type}">${l.text}</div>`).join('')}
+      ${result.log.map(l=>`<div class="log-${l.type}">${l.text}</div>`).join('')}
     </div>
     <button class="btn btn-purple" onclick="window._clearBattle()">← Zurück</button>
   </div>`;
 }
 
-function renderStats(c, eff) {
+function renderStats(c,eff){
+  const wins=c.battleHistory.filter(b=>b.won).length;
+  const losses=c.battleHistory.filter(b=>!b.won).length;
   return `
   <div class="card">
-    <div class="card-title">🔮 ${c.name}</div>
-    <div style="text-align:center;font-size:48px;margin:10px 0">${c.emoji}</div>
-    <div style="text-align:center;font-size:13px;color:var(--muted)">${c.title}</div>
+    <div style="text-align:center;font-size:56px;margin:6px 0">${c.emoji}</div>
+    <div style="text-align:center">
+      <div style="font-family:'Press Start 2P',monospace;font-size:12px;color:var(--text);margin-bottom:4px">${c.name}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--muted)">${c.title}</div>
+    </div>
     <hr class="section-divider">
     <div class="grid-2">
-      <div><span class="stat-badge" style="border-color:var(--accent2)">LEVEL ${c.level}</span></div>
-      <div><span class="stat-badge" style="border-color:var(--accent3)">🪙 ${c.coins}</span></div>
-      <div><span class="stat-badge">XP: ${c.xp}</span></div>
-      <div><span class="stat-badge">🏆 ${c.battleHistory.filter(b=>b.won).length}W/${c.battleHistory.filter(b=>!b.won).length}L</span></div>
+      <div class="stat-badge">⭐ Level ${c.level}</div>
+      <div class="stat-badge">🪙 ${c.coins}</div>
+      <div class="stat-badge">📈 ${c.xp} XP</div>
+      <div class="stat-badge">🏆 ${wins}W / ${losses}N</div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">📊 Kampfstats</div>
-    ${Object.entries(eff).map(([k, v]) => `
+    <div class="card-title">📊 Kampfwerte</div>
+    ${Object.entries(eff).map(([k,v])=>`
     <div class="stat-row">
       <div class="stat-label">${statLabel(k)}</div>
-      <div class="stat-bar">
-        <div class="stat-fill" style="width:${Math.min(100,(v/400)*100)}%;background:${statColor(k)}"></div>
-      </div>
+      <div class="stat-bar"><div class="stat-fill" style="width:${Math.min(100,(v/400)*100)}%;background:${statColor(k)}"></div></div>
       <div class="stat-val">${Math.floor(v)}</div>
     </div>`).join('')}
   </div>
   <div class="card">
-    <div class="card-title">🌟 Eigenschaften</div>
-    ${c.traits.length ? c.traits.map(t => `<span class="trait-chip">${t}</span>`).join('') : '<span style="color:var(--muted);font-size:13px">Keine Eigenschaften</span>'}
+    <div class="card-title">✨ Eigenschaften</div>
+    ${c.traits.length?c.traits.map(t=>`<span class="trait-chip">${t}</span>`).join(''):`<span style="color:var(--muted);font-size:14px">Keine Eigenschaften</span>`}
   </div>
   <div class="card">
     <div class="card-title">📅 Info</div>
-    <div style="font-size:13px;color:var(--muted)">Erschaffen: ${new Date(c.created).toLocaleDateString('de')}</div>
-    <div style="font-size:13px;color:var(--muted)">Kämpfe: ${c.battleHistory.length}</div>
-    <div style="font-size:13px;color:var(--muted)">Upgrades: ${c.upgrades.length}</div>
+    <div style="font-size:14px;font-weight:700;color:var(--muted)">Erschaffen: ${new Date(c.created).toLocaleDateString('de')}</div>
+    <div style="font-size:14px;font-weight:700;color:var(--muted)">Kämpfe gesamt: ${c.battleHistory.length}</div>
+    <div style="font-size:14px;font-weight:700;color:var(--muted)">Upgrades: ${c.upgrades.length}</div>
   </div>
-  <div style="margin-bottom:60px"></div>`;
+  <div style="height:8px"></div>`;
 }
 
-function renderModal() {
-  const m = state.modal;
-  if (m.type === 'code') {
-    const code = generateBattleCode(state.creature);
+function renderModal(){
+  const m=state.modal;
+  if(m.type==='code'){
+    const code=genCode(state.creature);
     return `
-    <div class="modal-overlay" onclick="window._closeModal()">
-      <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-overlay">
+      <div class="modal">
         <div class="modal-title">📋 Dein Kampfcode</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Schicke diesen Code deinem Gegner!</div>
-        <div class="code-box">${code}</div>
-        <button class="btn btn-purple" onclick="window._copyCode('${code}')">📋 Code kopieren</button>
-        <button class="btn btn-cyan" onclick="window._closeModal()">✓ Fertig</button>
+        <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px;text-align:center">Schicke diesen Code an deinen Gegner!</div>
+        <div class="code-box" id="codeBox">${code}</div>
+        <button class="btn btn-purple" onclick="window._copyCode()">📋 Code kopieren</button>
+        <button class="btn btn-outline" onclick="window._closeModal()">✓ Fertig</button>
       </div>
     </div>`;
   }
-  if (m.type === 'fight') {
+  if(m.type==='fight'){
     return `
     <div class="modal-overlay">
       <div class="modal">
         <div class="modal-title">⚔️ Gegner herausfordern</div>
-        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Füge den Kampfcode deines Gegners ein:</div>
-        <textarea id="enemyCode" rows="4" placeholder="Kampfcode hier einfügen..."></textarea>
+        <div style="font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px">Füge den Kampfcode des Gegners ein:</div>
+        <textarea id="enemyCode" rows="5" placeholder="Kampfcode hier einfügen..."></textarea>
         <button class="btn btn-red" onclick="window._startFight()">⚔️ KAMPF STARTEN!</button>
-        <button class="btn btn-cyan" onclick="window._closeModal()">Abbrechen</button>
+        <button class="btn btn-outline" onclick="window._closeModal()">Abbrechen</button>
+      </div>
+    </div>`;
+  }
+  if(m.type==='theme'){
+    const themes=[
+      {id:'dark',icon:'🌙',label:'Dark',bg:'#1e1e32',color:'#8b5cf6'},
+      {id:'light',icon:'☀️',label:'Hell',bg:'#ede9fe',color:'#6d28d9'},
+      {id:'nature',icon:'🌿',label:'Natur',bg:'#dcfce7',color:'#16a34a'},
+      {id:'candy',icon:'🍭',label:'Candy',bg:'#fce7f3',color:'#db2777'},
+    ];
+    return `
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal-title">🎨 Design wählen</div>
+        <div class="theme-picker" style="margin-bottom:12px">
+          ${themes.map(t=>`
+          <div class="theme-opt ${state.theme===t.id?'selected':''}" style="background:${t.bg};color:${t.color};border-color:${state.theme===t.id?t.color:'transparent'}" onclick="window._setTheme('${t.id}')">
+            ${t.icon}<br>${t.label}
+          </div>`).join('')}
+        </div>
+        <button class="btn btn-outline" onclick="window._closeModal()">✓ Fertig</button>
       </div>
     </div>`;
   }
@@ -1234,75 +1159,89 @@ function renderModal() {
 }
 
 // ===== EVENTS =====
-function attachEvents() {
-  window._do = doAction;
-  window._tab = (t) => setState({ tab: t });
-  window._petCreature = () => {
-    const s = document.getElementById('mainSprite');
-    if (s) { s.style.transform = 'scale(1.3) rotate(10deg)'; setTimeout(() => s.style.transform = '', 300); }
-    notify(`${state.creature.name} mag dich! 💕`);
+function attachEvents(){
+  window._tab=(t)=>setState({tab:t});
+  window._do=doAction;
+  window._sleep=startSleep;
+  window._wakeUp=wakeUp;
+  window._pet=()=>{
+    const s=document.querySelector('.creature-sprite');
+    if(s){s.style.transform='scale(1.3) rotate(10deg)';setTimeout(()=>s.style.transform='',300);}
+    if(!state.creature.sleeping)notify(`${state.creature.name} mag dich! 💕`);
   };
-  window._showCode = () => setState({ modal: { type: 'code' } });
-  window._openFight = () => setState({ modal: { type: 'fight' } });
-  window._closeModal = () => setState({ modal: null });
-  window._copyCode = (code) => {
-    navigator.clipboard?.writeText(code).then(() => notify('Code kopiert! 📋')).catch(() => notify('Manuell kopieren!', 'warn'));
+  window._showCode=()=>setState({modal:{type:'code'}});
+  window._openFight=()=>setState({modal:{type:'fight'}});
+  window._closeModal=()=>setState({modal:null});
+  window._themeModal=()=>setState({modal:{type:'theme'}});
+  window._setTheme=(t)=>{
+    document.documentElement.setAttribute('data-theme',t);
+    setState({theme:t,modal:null});
+    saveGame(state.creature,t);
   };
-  window._clearBattle = () => setState({ battleResult: null });
-  window._buy = (itemId) => {
-    const item = SHOP_ITEMS.find(i => i.id === itemId);
-    if (!item) return;
-    const c = { ...state.creature };
-    if (c.coins < item.cost) { notify('Nicht genug Münzen!', 'error'); return; }
-    c.coins -= item.cost;
-    c.stats = { ...c.stats };
-    item.effect(c);
-    c.upgrades = [...(c.upgrades || []), item.name];
-    setState({ creature: c });
+  window._copyCode=()=>{
+    const box=document.getElementById('codeBox');
+    const code=box?box.textContent.trim():'';
+    if(!code){notify('Fehler beim Kopieren','error');return;}
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(code).then(()=>notify('✅ Code kopiert!')).catch(()=>{
+        selectText(box);notify('Code markiert — manuell kopieren!','warn');
+      });
+    } else {
+      selectText(box);notify('Code markiert — manuell kopieren!','warn');
+    }
+  };
+  window._clearBattle=()=>setState({battleResult:null});
+  window._buy=(itemId)=>{
+    const item=SHOP.find(i=>i.id===itemId);
+    if(!item)return;
+    const c={...state.creature};
+    if(c.coins<item.cost){notify('Zu wenig Münzen!','error');return;}
+    c.coins-=item.cost;c.stats={...c.stats};
+    item.eff(c);
+    c.upgrades=[...(c.upgrades||[]),item.name];
+    setState({creature:c});
     notify(`${item.icon} ${item.name} gekauft!`);
   };
-  window._startFight = () => {
-    const code = document.getElementById('enemyCode')?.value.trim();
-    if (!code) { notify('Kein Code eingegeben!', 'error'); return; }
-    const enemy = parseBattleCode(code);
-    if (!enemy || !enemy.n || !enemy.s) { notify('Ungültiger Code!', 'error'); return; }
-
-    const you = { n: state.creature.name, e: state.creature.emoji, l: state.creature.level, s: getEffectiveStats(state.creature) };
-    const result = simulateBattle(you, enemy);
-
-    const c = { ...state.creature };
-    const xpGained = result.won ? rng(50, 20) + enemy.l * 5 : rng(10, 5);
-    c.xp += xpGained;
-    const newLevel = getLevel(c.xp);
-    if (newLevel > c.level) { c.level = newLevel; }
-
-    c.battleHistory = [...(c.battleHistory || []), {
-      won: result.won, time: Date.now(),
-      enemyName: enemy.n, enemyEmoji: enemy.e, enemyLevel: enemy.l,
-      enemyStats: enemy.s, xpGained, rounds: result.rounds
+  window._startFight=()=>{
+    const code=document.getElementById('enemyCode')?.value.trim();
+    if(!code){notify('Kein Code eingegeben!','error');return;}
+    const enemy=parseCode(code);
+    if(!enemy||!enemy.n||!enemy.s){notify('Ungültiger Kampfcode!','error');return;}
+    const you={n:state.creature.name,e:state.creature.emoji,l:state.creature.level,s:getEffStats(state.creature)};
+    const result=simulateBattle(you,enemy);
+    const c={...state.creature};
+    const xpGained=result.won?rng(50,20)+enemy.l*5:rng(10,5);
+    c.xp+=xpGained;
+    const newLvl=getLevel(c.xp);
+    if(newLvl>c.level)c.level=newLvl;
+    c.battleHistory=[...(c.battleHistory||[]),{
+      won:result.won,time:Date.now(),
+      enemyName:enemy.n,enemyEmoji:enemy.e,enemyLevel:enemy.l,
+      enemyStats:enemy.s,xpGained,rounds:result.rounds
     }];
-
-    setState({ creature: c, modal: null, battleResult: { result, enemy }, tab: 'battle' });
-    setTimeout(() => {
-      const log = document.getElementById('battleLog');
-      if (log) log.scrollTop = log.scrollHeight;
-    }, 100);
+    setState({creature:c,modal:null,battleResult:{result,enemy},tab:'battle'});
+    setTimeout(()=>{const log=document.getElementById('battleLog');if(log)log.scrollTop=log.scrollHeight;},80);
   };
 }
 
-// ===== COOLDOWN TICKER =====
-setInterval(() => {
-  if (state.creature && state.tab === 'home' || state.tab === 'train') render();
-}, 5000);
+function selectText(el){
+  const r=document.createRange();r.selectNodeContents(el);
+  const s=window.getSelection();s.removeAllRanges();s.addRange(r);
+}
+
+// Cooldown ticker
+setInterval(()=>{if(state.creature&&(state.tab==='home'||state.tab==='train'))render();},4000);
 
 // ===== INIT =====
-(async () => {
+(async()=>{
   await initDB();
-  const saved = await loadGame();
-  if (saved) {
-    state.creature = saved;
-    applyDecay();
+  const saved=await loadGame();
+  if(saved&&saved.creature){
+    state.creature=saved.creature;
+    state.theme=saved.theme||'dark';
   }
+  document.documentElement.setAttribute('data-theme',state.theme);
+  if(state.creature)applyDecay();
   render();
 })();
 </script>
