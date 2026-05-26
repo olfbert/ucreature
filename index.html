@@ -200,30 +200,88 @@ function getAvailableEvo(c){
 }
 
 // ===== CREATURE GEN =====
-const PREFIXES=['Zara','Krix','Veln','Moru','Typh','Drak','Silon','Nexu','Caer','Brix','Feln','Vox','Pyra','Zyru','Kael','Omni','Thyx','Grex','Niru','Plex','Auro','Blyx','Cryn','Dryx','Evon','Fyra','Glex','Hyrn'];
-const SUFFIXES=['ath','ox','ix','eon','ura','ax','el','ion','us','ar','yn','eth','oth','um','al','ex','on','is','yx','ur','ak','en','or','im','os'];
-const TITLES_BASE=['Wilde','Stürmerin','Ewige','Phantom','Zerstörer','Schattenjäger','Koloss','Berserker','Hexe','Titan','Orakel','Krieger'];
-const EMOJIS=['🐲','🦄','🐙','🦊','🐺','🦁','🐯','🐻','🦋','🦅','🐬','🦖','🦕','🐉','🦑','🦈','🐊','🦏','🦛','🐘','🦞','🦀','🦩','🦚','🦜','🐸','🦔','🦦','🐋','🦬','🐆','🦣'];
-const TRAITS=['Hartnäckig','Mutig','Listig','Schnell','Robust','Brilliant','Chaotisch','Präzise','Mystisch','Feurig','Kalt','Elektrisch','Giftig','Heilig','Dunkel','Beharrlich','Aggressiv','Vorsichtig'];
+const PREFIXES=[
+  'Zara','Krix','Veln','Moru','Typh','Drak','Silon','Nexu','Caer','Brix',
+  'Feln','Vox','Pyra','Zyru','Kael','Omni','Thyx','Grex','Niru','Plex',
+  'Auro','Blyx','Cryn','Dryx','Evon','Fyra','Glex','Hyrn','Ixar','Jorun',
+  'Kyth','Lorex','Myval','Nexor','Orvyn','Pryx','Quael','Ryvon','Saur','Telyx',
+  'Ulvax','Vreth','Wylk','Xaron','Ydrex','Zolth','Aelum','Byrax','Corvyn','Delth',
+  'Eldrix','Falyx','Gorvyn','Halyx','Itrex','Jarkon','Kelvyn','Lyrax','Mivok','Noryx',
+  'Obrix','Palvyn','Quvon','Rynak','Sylox','Tryvn','Uvrix','Valyx','Wolvyn','Xethor',
+  'Yrvax','Zalvyn','Aevok','Brylx','Cyrvon','Dexal','Emvyx','Forak','Gylvn','Hexor',
+];
+const SUFFIXES=[
+  'ath','ox','ix','eon','ura','ax','el','ion','us','ar',
+  'yn','eth','oth','um','al','ex','on','is','yx','ur',
+  'ak','en','or','im','os','ek','ul','an','yr','ash',
+  'orn','eld','und','esk','ith','ov','ral','sen','tak','von',
+  'wyn','zar','bel','dar','fer','gon','hel','kor','lar','mel',
+];
+const TITLES_BASE=[
+  'Wilde','Stürmerin','Ewige','Phantom','Zerstörer','Schattenjäger','Koloss','Berserker',
+  'Hexe','Titan','Orakel','Krieger','Bezwinger','Flüsterer','Seelenfresser','Donnerer',
+  'Nachtjäger','Eisbrecher','Feuerwächter','Sturmreiter','Abyssreiter','Weltenwanderer',
+];
+const EMOJIS=['🐲','🦄','🐙','🦊','🐺','🦁','🐯','🐻','🦋','🦅','🐬','🦖','🦕','🐉','🦑','🦈','🐊','🦏','🦛','🐘','🦞','🦀','🦩','🦚','🦜','🐸','🦔','🦦','🐋','🦬','🐆','🦣','🐴','🦌','🐂','🦒','🐪','🦘','🐓','🦤'];
+const TRAITS=['Hartnäckig','Mutig','Listig','Schnell','Robust','Brilliant','Chaotisch','Präzise','Mystisch','Feurig','Kalt','Elektrisch','Giftig','Heilig','Dunkel','Beharrlich','Aggressiv','Vorsichtig','Archaisch','Verhext','Gesegnet','Ungebändigt','Stoisch','Blutrünstig','Rastlos'];
+
+// ─── RARITY ───────────────────────────────────────────────────────────────────
+// Roll: normal 79%, uncommon 14%, rare 5%, epic 1.5%, legendary 0.4%, mythic 0.1%
+const RARITIES={
+  normal:   {label:'Normal',   color:'#94a3b8', glow:'',                 statMult:1.0,  traitBonus:0, icon:'',   chance:0.790},
+  uncommon: {label:'Ungewöhnlich',color:'#4ade80',glow:'0 0 8px #4ade80', statMult:1.15, traitBonus:1, icon:'🟢', chance:0.140},
+  rare:     {label:'Selten',   color:'#60a5fa', glow:'0 0 12px #60a5fa', statMult:1.35, traitBonus:1, icon:'🔵', chance:0.050},
+  epic:     {label:'Episch',   color:'#c084fc', glow:'0 0 18px #c084fc', statMult:1.65, traitBonus:2, icon:'🟣', chance:0.015},
+  legendary:{label:'Legendär', color:'#fbbf24', glow:'0 0 24px #fbbf24', statMult:2.10, traitBonus:2, icon:'🌟', chance:0.004},
+  mythic:   {label:'Mythisch', color:'#f472b6', glow:'0 0 32px #f472b6, 0 0 60px #8b5cf6', statMult:3.0, traitBonus:3, icon:'💠', chance:0.001},
+};
+// Special mythic-only name parts that hint at their power
+const MYTHIC_PREFIXES=['Aether','Omni','Nexus','Abyss','Divin','Eterno','Arcanum','Primor','Infini','Solum'];
+const MYTHIC_SUFFIXES=['prime','alis','ethos','divus','arcus','sol','nox','rex','deus','maximus'];
+
+function rollRarity(){
+  const r=Math.random();
+  let acc=0;
+  for(const[k,v]of Object.entries(RARITIES)){acc+=v.chance;if(r<acc)return k;}
+  return'normal';
+}
 
 function rng(max,min=0){return Math.floor(Math.random()*(max-min+1))+min;}
 function pick(arr){return arr[rng(arr.length-1)];}
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 
 function generateCreature(){
-  const name=pick(PREFIXES)+pick(SUFFIXES);
+  const rarity=rollRarity();
+  const rar=RARITIES[rarity];
+  // Mythic/legendary get special names
+  const isMythic=rarity==='mythic'||rarity==='legendary';
+  const prefix=isMythic?pick(MYTHIC_PREFIXES):pick(PREFIXES);
+  const suffix=isMythic?pick(MYTHIC_SUFFIXES):pick(SUFFIXES);
+  const name=prefix+suffix;
+
   const traits=[],pool=[...TRAITS];
-  for(let i=0;i<rng(3,1);i++){const idx=rng(pool.length-1);traits.push(pool.splice(idx,1)[0]);}
+  const traitCount=Math.min(rng(3,1)+rar.traitBonus, pool.length);
+  for(let i=0;i<traitCount;i++){const idx=rng(pool.length-1);traits.push(pool.splice(idx,1)[0]);}
+
   const element=pick(ELEM_KEYS);
-  const base={hp:rng(130,80),atk:rng(20,8),def:rng(16,5),spd:rng(22,8),int:rng(18,6),lck:rng(14,3)};
+  // Base stats scaled by rarity multiplier
+  const base={
+    hp: Math.floor(rng(130,80)*rar.statMult),
+    atk:Math.floor(rng(20,8) *rar.statMult),
+    def:Math.floor(rng(16,5) *rar.statMult),
+    spd:Math.floor(rng(22,8) *rar.statMult),
+    int:Math.floor(rng(18,6) *rar.statMult),
+    lck:Math.floor(rng(14,3) *rar.statMult),
+  };
   const titleBase=pick(TITLES_BASE);
   return{
     id:uid(),
-    name,emoji:pick(EMOJIS),element,
+    name,emoji:pick(EMOJIS),element,rarity,
     titleBase,title:`der/die ${titleBase}`,
     traits,stats:{...base},
     hunger:80,happiness:80,energy:80,cleanliness:80,
     sleeping:false,sleepStart:null,
+    injured:false,injuredHp:null,
     level:1,xp:0,coins:50,
     cooldowns:{},upgrades:[],
     battleHistory:[],evoHistory:[],
@@ -243,6 +301,39 @@ function genCode(c){
 function parseCode(code){
   try{const pad=code.trim()+'=='.slice(0,(4-code.trim().length%4)%4);return JSON.parse(decodeURIComponent(escape(atob(pad))));}
   catch{return null;}
+}
+
+// ===== NPC GENERATION =====
+const NPC_NAMES=[
+  ['Storm','Blaze','Shadow','Venom','Frost','Thunder','Ash','Iron','Blood','Stone'],
+  ['fang','claw','wing','hide','spine','maw','tail','eye','heart','soul'],
+];
+function generateNpc(playerLevel){
+  // Level within ±3 of player, min 1
+  const lvl=Math.max(1,playerLevel+rng(3,-3));
+  // Scale stats roughly to level
+  const scale=1+lvl*0.08;
+  const rarity=rollRarity();
+  const rar=RARITIES[rarity];
+  const s={
+    hp: Math.floor(rng(130,80)*scale*rar.statMult),
+    atk:Math.floor(rng(20,8) *scale*rar.statMult),
+    def:Math.floor(rng(16,5) *scale*rar.statMult),
+    spd:Math.floor(rng(22,8) *scale*rar.statMult),
+    int:Math.floor(rng(18,6) *scale*rar.statMult),
+    lck:Math.floor(rng(14,3) *scale*rar.statMult),
+  };
+  const rar2=RARITIES[rarity];
+  return{
+    id:'npc_'+uid(),
+    n:pick(NPC_NAMES[0])+pick(NPC_NAMES[1]),
+    e:pick(EMOJIS),
+    l:lvl,s,
+    el:pick(ELEM_KEYS),
+    es:0,
+    rarity,rarityLabel:rar2.label,rarityIcon:rar2.icon,
+    isNpc:true,
+  };
 }
 
 // ===== BATTLE SIM =====
@@ -358,8 +449,10 @@ function wakeUp(){
   if(!c.sleeping)return;
   const gained=Math.round(c.energy-(c.sleepEnergyAtStart||0));
   c.sleeping=false;c.sleepStart=null;c.sleepEnergyAtStart=undefined;
+  // Full rest also heals injuries
+  if(c.injured&&c.energy>=100){c.injured=false;}
   setState({creature:c});
-  notify(`☀️ Aufgewacht! Energie +${gained}`);
+  notify(c.injured?`☀️ Aufgewacht! Energie +${gained} (noch verletzt — mehr schlafen!)`:`☀️ Ausgeruht! Energie +${gained}`);
 }
 
 // ===== EVOLUTION =====
@@ -444,35 +537,53 @@ const SHOP=[
   {id:'omni',icon:'🔮',name:'Omni-Splitter',desc:'Alle Stats +25 dauerhaft',cost:1200,eff:c=>{for(const k of['hp','atk','def','spd','int','lck'])c.stats[k]+=25;}},
 ];
 
-// ===== EXPORT / IMPORT =====
+// ===== EXPORT / IMPORT  (export is AES-GCM encrypted — cannot be hand-edited) =====
 async function exportSave(){
   const c=state.creature;if(!c){notify('Kein Wesen zum Exportieren','error');return;}
-  const data=JSON.stringify({creature:c,theme:state.theme,exportedAt:new Date().toISOString(),version:3});
-  const blob=new Blob([data],{type:'application/json'});
+  // Encrypt the whole payload so it cannot be manually edited
+  const enc=await encrypt({creature:c,theme:state.theme,exportedAt:new Date().toISOString(),version:4});
+  const blob=new Blob([enc],{type:'text/plain'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url;a.download=`${c.name}_CreatureArena.json`;a.click();
+  a.href=url;a.download=`${c.name}_CreatureArena.ca`;a.click();
   URL.revokeObjectURL(url);
-  notify('💾 Export erfolgreich!');
+  notify('💾 Verschlüsselt exportiert!');
 }
 function importSave(){
   const input=document.createElement('input');
-  input.type='file';input.accept='.json';
+  input.type='file';input.accept='.ca,.json';
   input.onchange=async e=>{
     const file=e.target.files[0];if(!file)return;
     try{
-      const text=await file.text();
-      const data=JSON.parse(text);
+      const text=(await file.text()).trim();
+      let data=null;
+      // Try decrypting first (.ca file)
+      data=await decrypt(text);
+      // Fallback: plain JSON (old format) — but reject if it looks tampered
+      if(!data){
+        try{
+          const raw=JSON.parse(text);
+          if(raw&&raw.creature){
+            // Sign-check: plain JSON imports are blocked to prevent cheating
+            notify('Alter Speicherstand ohne Verschlüsselung — nicht mehr importierbar.','error');
+            return;
+          }
+        }catch{}
+        notify('Ungültige oder beschädigte Datei!','error');return;
+      }
       if(!data.creature||!data.creature.id){notify('Ungültige Datei!','error');return;}
-      // Ensure new fields exist
+      // Patch missing fields
       data.creature.evoHistory=data.creature.evoHistory||[];
       data.creature.evoStage=data.creature.evoStage||0;
       data.creature.element=data.creature.element||pick(ELEM_KEYS);
       data.creature.id=data.creature.id||uid();
+      data.creature.rarity=data.creature.rarity||'normal';
+      data.creature.injured=data.creature.injured||false;
+      data.creature.injuredHp=data.creature.injuredHp||null;
       setState({creature:data.creature,theme:data.theme||'dark',modal:null});
       await saveGame(data.creature,data.theme||'dark');
       notify(`✅ ${data.creature.name} importiert!`);
-    }catch{notify('Fehler beim Importieren!','error');}
+    }catch(err){notify('Fehler beim Importieren!','error');}
   };
   input.click();
 }
@@ -553,10 +664,14 @@ function renderMain(root){
   <div class="topbar">
     <div class="topbar-name">${c.emoji} ${c.name.toUpperCase()}</div>
     ${el?`<div class="topbar-pill" style="background:${el.color}33">${el.icon}</div>`:''}
+    ${c.rarity&&c.rarity!=='normal'?`<div class="topbar-pill" style="background:${RARITIES[c.rarity].color}33;color:#fff">${RARITIES[c.rarity].icon}</div>`:''}
     <div class="topbar-pill">⭐${c.level}</div>
     <div class="topbar-pill">🪙${c.coins}</div>
   </div>
   ${sleepBanner}
+  ${c.injured&&!c.sleeping?`<div style="background:linear-gradient(90deg,#7f1d1d,#450a0a);color:#fca5a5;padding:7px 12px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:2px solid #ef4444">
+    <span>🩸 ${c.name} ist verletzt! Erst schlafen zum Regenerieren.</span>
+  </div>`:''}
   <div class="scroll">${content}</div>
   <nav class="nav">${tabs.map(t=>`<button class="nav-btn ${state.tab===t.id?'active':''}" onclick="window._tab('${t.id}')""><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>
   </div>
@@ -577,7 +692,8 @@ function renderHome(c,mood,eff,xpCur,xpNxt,evoAvail,el){
   <div class="creature-stage">
     ${asleep?'<div class="zzz">💤</div>':''}
     <div class="creature-sprite ${asleep?'sleeping':''}" onclick="window._pet()">${c.emoji}</div>
-    <div class="creature-name">${c.name}${c.evoStage>0?' '+'✨'.repeat(Math.min(c.evoStage,5)):''}</div>
+    <div class="creature-name" style="${c.rarity&&c.rarity!=='normal'?'text-shadow:'+RARITIES[c.rarity].glow:''}">${c.emoji.length?'':''} ${c.name}${c.evoStage>0?' '+'✨'.repeat(Math.min(c.evoStage,5)):''}</div>
+    ${c.rarity&&c.rarity!=='normal'?`<div style="font-size:13px;font-weight:900;color:${RARITIES[c.rarity].color};text-shadow:${RARITIES[c.rarity].glow};margin-top:2px">${RARITIES[c.rarity].icon} ${RARITIES[c.rarity].label}</div>`:''}
     <div class="creature-title">${c.title}</div>
     <div class="creature-mood">${mood.emoji} ${mood.text}</div>
     ${el?`<div class="creature-element" style="background:${el.bg};color:${el.color}">${el.icon} ${el.name}</div>`:''}
@@ -652,8 +768,11 @@ function renderBattle(c){
     ${el?`<div style="margin-bottom:10px"><span class="elem-badge" style="background:${el.bg};color:${el.color}">${el.icon} ${el.name}</span>
     <span style="font-size:12px;font-weight:700;color:var(--muted)"> Stark gegen: ${el.strong.map(s=>ELEMENTS[s]?.icon+' '+ELEMENTS[s]?.name).join(', ')}</span></div>`:''}
     <button class="btn btn-purple" onclick="window._showCode()">📋 Meinen Kampfcode anzeigen</button>
-    <button class="btn btn-red" onclick="window._openFight()" ${!canFight?'disabled':''}>
-      ⚔️ Gegner herausfordern${!canFight?` — ${fmtCd(cdLeft_)}`:''}
+    <button class="btn btn-amber" onclick="window._npcFight()" ${(!canFight||c.injured)?'disabled':''}>
+      🤖 KI-Gegner herausfordern${!canFight?` — ${fmtCd(cdLeft_)}`:c.injured?' (verletzt)':''}
+    </button>
+    <button class="btn btn-red" onclick="window._openFight()" ${(!canFight||c.injured)?'disabled':''}>
+      ⚔️ Spieler herausfordern${!canFight?` — ${fmtCd(cdLeft_)}`:c.injured?' (verletzt)':''}
     </button>
   </div>
   <div class="card">
@@ -702,7 +821,8 @@ function renderProfile(c,eff,el){
   <div class="card">
     <div style="text-align:center;font-size:60px;margin:6px 0">${c.emoji}${'✨'.repeat(Math.min(c.evoStage||0,5))}</div>
     <div style="text-align:center">
-      <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--text);margin-bottom:4px">${c.name}</div>
+      <div style="font-family:'Press Start 2P',monospace;font-size:11px;color:var(--text);margin-bottom:4px;${c.rarity&&c.rarity!=='normal'?'text-shadow:'+RARITIES[c.rarity].glow:''}">${c.name}</div>
+      ${c.rarity&&c.rarity!=='normal'?`<div style="font-size:14px;font-weight:900;color:${RARITIES[c.rarity].color};text-shadow:${RARITIES[c.rarity].glow}">${RARITIES[c.rarity].icon} ${RARITIES[c.rarity].label}</div>`:''}
       <div style="font-size:14px;font-weight:700;color:var(--muted)">${c.title}</div>
       ${el?`<div class="elem-badge" style="background:${el.bg};color:${el.color}">${el.icon} ${el.name}</div>`:''}
     </div>
@@ -864,6 +984,32 @@ function attachEvents(){
     }else{selText(box);notify('Markiert — manuell kopieren!','warn');}
   };
   window._clearBattle=()=>setState({battleResult:null});
+  window._npcFight=()=>{
+    if(!canDo('battle')){notify(`Noch ${fmtCd(cdLeft('battle'))} Cooldown!`,'warn');return;}
+    if(state.creature.injured){notify('Erst verletzte Wesen ausschlafen!','warn');return;}
+    const npc=generateNpc(state.creature.level);
+    const you={n:state.creature.name,e:state.creature.emoji,l:state.creature.level,s:getEffStats(state.creature),el:state.creature.element,id:state.creature.id};
+    const result=simulateBattle(you,npc);
+    const c={...state.creature};
+    const xpGained=result.won?rng(30,10)+npc.l*3:rng(5,2);
+    c.xp+=xpGained;
+    const newLvl=getLevel(c.xp);
+    if(newLvl>c.level){
+      c.level=newLvl;
+      c.stats={hp:c.stats.hp+rng(6,2),atk:c.stats.atk+rng(2,0),def:c.stats.def+rng(2,0),spd:c.stats.spd+rng(2,0),int:c.stats.int+rng(2,0),lck:c.stats.lck+rng(1,0)};
+    }
+    c.battleHistory=[...(c.battleHistory||[]),{
+      won:result.won,time:Date.now(),isNpc:true,
+      enemyName:npc.n,enemyEmoji:npc.e,enemyLevel:npc.l,
+      enemyStats:npc.s,enemyElement:npc.el,enemyRarity:npc.rarity,
+      xpGained,rounds:result.rounds
+    }];
+    c.cooldowns={...c.cooldowns,battle:Date.now()};
+    if(!result.won){c.injured=true;c.energy=1;c.happiness=Math.max(0,c.happiness-15);}
+    else{c.injured=false;}
+    setState({creature:c,battleResult:{result,enemy:npc,isNpc:true},tab:'battle'});
+    setTimeout(()=>{const log=document.getElementById('battleLog');if(log)log.scrollTop=log.scrollHeight;},80);
+  };
   window._buy=(itemId)=>{
     const item=SHOP.find(i=>i.id===itemId);if(!item)return;
     const c={...state.creature};
@@ -892,14 +1038,22 @@ function attachEvents(){
       c.stats={hp:c.stats.hp+rng(6,2),atk:c.stats.atk+rng(2,0),def:c.stats.def+rng(2,0),spd:c.stats.spd+rng(2,0),int:c.stats.int+rng(2,0),lck:c.stats.lck+rng(1,0)};
     }
     c.battleHistory=[...(c.battleHistory||[]),{
-      won:result.won,time:Date.now(),
+      won:result.won,time:Date.now(),isNpc:enemy.isNpc||false,
       enemyName:enemy.n,enemyEmoji:enemy.e,enemyLevel:enemy.l,
       enemyStats:enemy.s,enemyElement:enemy.el,
       xpGained,rounds:result.rounds
     }];
     // Apply battle cooldown
     c.cooldowns={...c.cooldowns,battle:Date.now()};
-    setState({creature:c,modal:null,battleResult:{result,enemy},tab:'battle'});
+    // Loss: set to 1 HP (injured) — must rest/sleep to recover
+    if(!result.won){
+      c.injured=true;
+      c.energy=1;
+      c.happiness=Math.max(0,c.happiness-20);
+    }else{
+      c.injured=false;
+    }
+    setState({creature:c,modal:null,battleResult:{result,enemy,isNpc:enemy.isNpc||false},tab:'battle'});
     setTimeout(()=>{const log=document.getElementById('battleLog');if(log)log.scrollTop=log.scrollHeight;},80);
   };
 }
@@ -919,6 +1073,8 @@ setInterval(()=>{if(state.creature&&(state.tab==='home'||state.tab==='train'||st
     state.creature.evoStage=state.creature.evoStage||0;
     state.creature.element=state.creature.element||pick(ELEM_KEYS);
     state.creature.id=state.creature.id||uid();
+    state.creature.rarity=state.creature.rarity||'normal';
+    state.creature.injured=state.creature.injured||false;
     state.theme=saved.theme||'dark';
   }
   document.documentElement.setAttribute('data-theme',state.theme);
