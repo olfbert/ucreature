@@ -18,8 +18,8 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 #root{width:100%;height:100dvh;display:flex;flex-direction:column;position:relative;}
 [data-theme="dark"] #root::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);pointer-events:none;z-index:9998;}
 .screen{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
-/* TOPBAR */
-.topbar{background:var(--topbg);padding:10px 12px;flex-shrink:0;display:flex;align-items:center;gap:6px;box-shadow:0 2px 12px var(--shadow);}
+/* TOPBAR — safe-area-inset-top pushes content below the notch */
+.topbar{background:var(--topbg);padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:10px;padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));flex-shrink:0;display:flex;align-items:center;gap:6px;box-shadow:0 2px 12px var(--shadow);}
 .topbar-name{font-family:'Press Start 2P',monospace;font-size:9px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.4);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .topbar-pill{background:rgba(255,255,255,0.2);border-radius:20px;padding:4px 9px;font-size:12px;font-weight:800;color:#fff;display:flex;align-items:center;gap:3px;white-space:nowrap;}
 .topbar-btn{background:rgba(255,255,255,0.2);border:none;border-radius:20px;padding:4px 8px;color:#fff;font-size:14px;cursor:pointer;font-weight:700;line-height:1;}
@@ -27,7 +27,7 @@ html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-fam
 .sleep-banner{background:linear-gradient(90deg,#1e3a5f,#1a2a4a);color:#93c5fd;padding:7px 12px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:2px solid #3b82f6;}
 .sleep-banner button{background:#3b82f6;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:800;padding:4px 10px;cursor:pointer;font-family:'Nunito',sans-serif;}
 /* NAV */
-.nav{display:flex;background:var(--navbg);border-top:2px solid var(--border);flex-shrink:0;box-shadow:0 -2px 12px var(--shadow);}
+.nav{display:flex;background:var(--navbg);border-top:2px solid var(--border);flex-shrink:0;box-shadow:0 -2px 12px var(--shadow);padding-bottom:env(safe-area-inset-bottom);}
 .nav-btn{flex:1;padding:7px 2px 9px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:9px;font-weight:700;transition:color 0.15s;position:relative;}
 .nav-btn.active{color:var(--accent);}
 .nav-btn.active::before{content:'';position:absolute;top:0;left:20%;right:20%;height:3px;background:var(--accent);border-radius:0 0 3px 3px;}
@@ -326,14 +326,40 @@ function notify(msg,type='ok'){
 }
 
 // ===== SLEEP =====
-function startSleep(){const c={...state.creature,sleeping:true,sleepStart:Date.now()};setState({creature:c});notify('😴 Gute Nacht!');}
+// Energy regen: exactly 1 point per second (0→100 in 100 seconds)
+let sleepTicker=null;
+function startSleep(){
+  const c={...state.creature,sleeping:true,sleepStart:Date.now(),sleepEnergyAtStart:state.creature.energy};
+  setState({creature:c});
+  notify('😴 Gute Nacht!');
+  startSleepTicker();
+}
+function startSleepTicker(){
+  if(sleepTicker)clearInterval(sleepTicker);
+  sleepTicker=setInterval(()=>{
+    const c=state.creature;
+    if(!c||!c.sleeping){clearInterval(sleepTicker);sleepTicker=null;return;}
+    const secSlept=(Date.now()-c.sleepStart)/1000;
+    const base=c.sleepEnergyAtStart||0;
+    const newEnergy=Math.min(100,Math.floor(base+secSlept));
+    if(newEnergy===c.energy&&newEnergy<100)return;
+    state.creature={...c,energy:newEnergy};
+    // Update banner progress text cheaply without full re-render
+    const prog=document.getElementById('sleepProgress');
+    if(prog)prog.textContent=`⚡ ${newEnergy}/100`;
+    const bar=document.getElementById('sleepBar');
+    if(bar)bar.style.width=newEnergy+'%';
+    if(newEnergy>=100){wakeUp();}
+  },1000);
+}
 function wakeUp(){
+  if(sleepTicker){clearInterval(sleepTicker);sleepTicker=null;}
   const c={...state.creature};
   if(!c.sleeping)return;
-  const mins=(Date.now()-(c.sleepStart||Date.now()))/60000;
-  const eg=Math.min(100-c.energy,Math.floor(mins*2)+20);
-  c.energy=Math.min(100,c.energy+eg);c.sleeping=false;c.sleepStart=null;
-  setState({creature:c});notify(`☀️ Aufgewacht! Energie +${eg}`);
+  const gained=Math.round(c.energy-(c.sleepEnergyAtStart||0));
+  c.sleeping=false;c.sleepStart=null;c.sleepEnergyAtStart=undefined;
+  setState({creature:c});
+  notify(`☀️ Aufgewacht! Energie +${gained}`);
 }
 
 // ===== EVOLUTION =====
@@ -363,10 +389,16 @@ function attemptEvo(){
 }
 
 // ===== ACTIONS =====
+// Actions that require energy > 0
+const ENERGY_ACTIONS=['train_atk','train_def','train_spd','train_int','play','work'];
 function doAction(action){
   const c={...state.creature};
   if(c.sleeping){notify('😴 Erst aufwecken!','warn');return;}
   if(!canDo(action)){notify(`Cooldown: noch ${fmtCd(cdLeft(action))}!`,'warn');return;}
+  // Energy check
+  if(ENERGY_ACTIONS.includes(action)&&c.energy<=0){
+    notify('😵 Keine Energie! Erst schlafen legen.','warn');return;
+  }
   c.cooldowns={...c.cooldowns,[action]:Date.now()};
   let msg='';
   if(action==='train_atk'){const g=rng(4,1);c.stats={...c.stats,atk:c.stats.atk+g};c.energy=Math.max(0,c.energy-12);c.hunger=Math.max(0,c.hunger-10);c.xp+=15;msg=`⚔️ ATK +${g}`;}
@@ -507,7 +539,15 @@ function renderMain(root){
   else if(state.tab==='options')content=renderOptions();
 
   const notifs=state.notifications.map(n=>`<div class="notif ${n.type==='error'?'error':n.type==='warn'?'warn':''}">${n.msg}</div>`).join('');
-  const sleepBanner=c.sleeping?`<div class="sleep-banner">😴 ${c.name} schläft...<button onclick="window._wakeUp()">Aufwecken ☀️</button></div>`:'';
+  const sleepBanner=c.sleeping?`<div class="sleep-banner">
+    <div style="flex:1">
+      <div style="margin-bottom:4px">😴 ${c.name} schläft... <span id="sleepProgress">⚡ ${Math.floor(c.energy)}/100</span></div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:6px;height:6px;overflow:hidden">
+        <div id="sleepBar" style="height:100%;background:#60a5fa;border-radius:6px;width:${c.energy}%;transition:width 0.9s linear"></div>
+      </div>
+    </div>
+    <button onclick="window._wakeUp()" style="margin-left:10px;white-space:nowrap">Aufwecken ☀️</button>
+  </div>`:''
 
   root.innerHTML=`<div class="screen">
   <div class="topbar">
@@ -559,10 +599,11 @@ function renderHome(c,mood,eff,xpCur,xpNxt,evoAvail,el){
   <div class="card">
     <div class="card-title">⚡ Aktionen</div>
     ${asleep?`<div style="text-align:center;padding:12px;font-size:14px;font-weight:700;color:var(--muted)">😴 ${c.name} schläft — zuerst aufwecken!</div>`:`
+    ${c.energy<=0?`<div style="background:rgba(248,113,113,0.12);border:1.5px solid var(--accent5);border-radius:12px;padding:10px;text-align:center;font-size:13px;font-weight:800;color:var(--accent5);margin-bottom:8px">😵 Keine Energie! Schlafen legen zum Regenerieren.</div>`:''}
     <div class="btn-grid" style="margin-bottom:8px">
       <button class="btn btn-amber" onclick="window._do('feed')" ${!canDo('feed')?'disabled':''}>🍖 Füttern${!canDo('feed')?`<span class="cd-label">&nbsp;${fmtCd(cdLeft('feed'))}</span>`:''}</button>
-      <button class="btn btn-cyan" onclick="window._do('play')" ${!canDo('play')?'disabled':''}>🎮 Spielen${!canDo('play')?`<span class="cd-label">&nbsp;${fmtCd(cdLeft('play'))}</span>`:''}</button>
-      <button class="btn btn-green" onclick="window._do('work')" ${!canDo('work')?'disabled':''}>⚒️ Arbeiten${!canDo('work')?`<span class="cd-label">&nbsp;${fmtCd(cdLeft('work'))}</span>`:''}</button>
+      <button class="btn btn-cyan" onclick="window._do('play')" ${(!canDo('play')||c.energy<=0)?'disabled':''}>🎮 Spielen${!canDo('play')?`<span class="cd-label">&nbsp;${fmtCd(cdLeft('play'))}</span>`:''}</button>
+      <button class="btn btn-green" onclick="window._do('work')" ${(!canDo('work')||c.energy<=0)?'disabled':''}>⚒️ Arbeiten${!canDo('work')?`<span class="cd-label">&nbsp;${fmtCd(cdLeft('work'))}</span>`:''}</button>
       <button class="btn btn-outline" onclick="window._do('clean')" ${!canDo('clean')?'disabled':''}>🚿 Waschen${!canDo('clean')?`<span class="cd-label">&nbsp;${fmtCd(cdLeft('clean'))}</span>`:''}</button>
     </div>
     <button class="btn btn-purple" onclick="window._sleep()">😴 Schlafen legen</button>`}
@@ -581,6 +622,7 @@ function renderTrain(c,eff){
   return `<div class="card">
     <div class="card-title">💪 Training</div>
     ${asleep?`<div style="text-align:center;padding:12px;font-size:14px;font-weight:700;color:var(--muted)">😴 ${c.name} schläft!</div>`:
+    eff.energy<=0||c.energy<=0?`<div style="background:rgba(248,113,113,0.12);border:1.5px solid var(--accent5);border-radius:12px;padding:12px;text-align:center;font-size:13px;font-weight:800;color:var(--accent5)">😵 Keine Energie! Erst schlafen legen.</div>`:
     actions.map(a=>`<button class="btn ${a.cls}" onclick="window._do('${a.id}')" ${(!canDo(a.id)||asleep)?'disabled':''}>${a.icon} ${a.label}${!canDo(a.id)?` — ${fmtCd(cdLeft(a.id))}`:''}  </button>`).join('')}
   </div>
   <div class="card">
@@ -880,7 +922,11 @@ setInterval(()=>{if(state.creature&&(state.tab==='home'||state.tab==='train'||st
     state.theme=saved.theme||'dark';
   }
   document.documentElement.setAttribute('data-theme',state.theme);
-  if(state.creature)applyDecay();
+  if(state.creature){
+    applyDecay();
+    // If creature was sleeping, restart the ticker
+    if(state.creature.sleeping)startSleepTicker();
+  }
   render();
 })();
 </script>
