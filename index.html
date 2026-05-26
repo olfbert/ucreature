@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CreatureArena">
+<meta name="theme-color" content="#0a0a12">
+<title>CreatureArena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a12;
+    --surface: #12121e;
+    --card: #1a1a2e;
+    --border: #2a2a4a;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --accent3: #f59e0b;
+    --accent4: #10b981;
+    --accent5: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --pixel: 'Press Start 2P', monospace;
+    --mono: 'VT323', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 18px;
+    overflow: hidden;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #root { width: 100%; height: 100%; display: flex; flex-direction: column; }
+
+  /* Scanlines overlay */
+  #root::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.05) 2px,
+      rgba(0,0,0,0.05) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  .screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* TOP BAR */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface);
+    border-bottom: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-title {
+    font-family: var(--pixel);
+    font-size: 9px;
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--accent);
+  }
+  .topbar-coins {
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--accent3);
+  }
+  .topbar-level {
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--accent2);
+  }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    background: var(--surface);
+    border-top: 2px solid var(--border);
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 10px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: var(--muted);
+    font-family: var(--pixel);
+    font-size: 6px;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn.active::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+  .nav-icon { font-size: 20px; line-height: 1; }
+
+  /* SCROLL AREA */
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 12px; }
+  .scroll::-webkit-scrollbar { width: 4px; }
+  .scroll::-webkit-scrollbar-track { background: var(--bg); }
+  .scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(124,58,237,0.5), transparent);
+  }
+  .card-title {
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--accent2);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* CREATURE DISPLAY */
+  .creature-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 70%);
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+  .creature-sprite {
+    font-size: 64px;
+    line-height: 1;
+    filter: drop-shadow(0 0 20px rgba(124,58,237,0.8));
+    animation: float 3s ease-in-out infinite;
+    cursor: pointer;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+  .creature-name {
+    font-family: var(--pixel);
+    font-size: 11px;
+    color: var(--text);
+    margin-top: 10px;
+    text-align: center;
+  }
+  .creature-title {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .creature-mood {
+    font-size: 13px;
+    color: var(--accent3);
+    margin-top: 4px;
+  }
+
+  /* STAT BARS */
+  .stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+  }
+  .stat-label {
+    font-family: var(--pixel);
+    font-size: 6px;
+    color: var(--muted);
+    width: 56px;
+    flex-shrink: 0;
+  }
+  .stat-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 1px;
+    overflow: hidden;
+    position: relative;
+  }
+  .stat-fill {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.5s ease;
+    position: relative;
+  }
+  .stat-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: rgba(255,255,255,0.4);
+  }
+  .stat-val {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--text);
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border: 2px solid;
+    border-radius: 2px;
+    font-family: var(--pixel);
+    font-size: 7px;
+    cursor: pointer;
+    transition: all 0.1s;
+    background: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: 100%;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+  .btn:active::before { opacity: 0.1; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-purple { color: var(--accent); border-color: var(--accent); }
+  .btn-purple:not(:disabled):hover { box-shadow: 0 0 12px rgba(124,58,237,0.5); }
+  .btn-cyan { color: var(--accent2); border-color: var(--accent2); }
+  .btn-cyan:not(:disabled):hover { box-shadow: 0 0 12px rgba(6,182,212,0.5); }
+  .btn-amber { color: var(--accent3); border-color: var(--accent3); }
+  .btn-amber:not(:disabled):hover { box-shadow: 0 0 12px rgba(245,158,11,0.5); }
+  .btn-green { color: var(--accent4); border-color: var(--accent4); }
+  .btn-green:not(:disabled):hover { box-shadow: 0 0 12px rgba(16,185,129,0.5); }
+  .btn-red { color: var(--accent5); border-color: var(--accent5); }
+
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn-grid .btn { margin-bottom: 0; }
+
+  /* XP BAR */
+  .xp-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .xp-label { font-family: var(--pixel); font-size: 6px; color: var(--accent3); width: 36px; }
+  .xp-bar {
+    flex: 1; height: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+  .xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent3), #fbbf24);
+    transition: width 0.5s ease;
+  }
+  .xp-text { font-family: var(--pixel); font-size: 6px; color: var(--accent3); width: 56px; text-align: right; }
+
+  /* BATTLE */
+  .battle-screen {
+    background: var(--bg);
+    border: 2px solid var(--accent5);
+    border-radius: 4px;
+    padding: 12px;
+    font-family: var(--pixel);
+  }
+  .battle-log {
+    height: 180px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid var(--border);
+    padding: 8px;
+    font-size: 8px;
+    line-height: 1.8;
+    margin-bottom: 8px;
+    border-radius: 2px;
+  }
+  .battle-log::-webkit-scrollbar { width: 3px; }
+  .battle-log::-webkit-scrollbar-thumb { background: var(--accent5); }
+  .log-you { color: var(--accent2); }
+  .log-enemy { color: var(--accent5); }
+  .log-system { color: var(--accent3); }
+  .log-win { color: var(--accent4); }
+  .log-lose { color: var(--accent5); }
+
+  .battle-combatants {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 0;
+  }
+  .combatant { text-align: center; }
+  .combatant-sprite { font-size: 40px; }
+  .combatant-name { font-size: 7px; color: var(--muted); margin-top: 4px; }
+  .combatant-hp {
+    font-size: 8px;
+    margin-top: 2px;
+  }
+  .vs-text { font-size: 14px; color: var(--accent5); text-shadow: 0 0 8px var(--accent5); }
+
+  /* SHOP */
+  .shop-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .shop-item:hover { border-color: var(--accent3); }
+  .shop-item-icon { font-size: 28px; }
+  .shop-item-info { flex: 1; }
+  .shop-item-name { font-family: var(--pixel); font-size: 7px; color: var(--text); }
+  .shop-item-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .shop-item-price { font-family: var(--pixel); font-size: 8px; color: var(--accent3); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+  }
+  .modal {
+    background: var(--card);
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    padding: 16px;
+    width: 100%;
+    max-width: 380px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 0 40px rgba(124,58,237,0.4);
+  }
+  .modal-title {
+    font-family: var(--pixel);
+    font-size: 9px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .modal textarea, .modal input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 8px;
+    resize: vertical;
+    outline: none;
+    margin-bottom: 8px;
+  }
+  .modal textarea:focus, .modal input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  .modal-close {
+    position: absolute;
+    top: 8px; right: 10px;
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+  }
+
+  /* NOTIFICATION */
+  .notif {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--card);
+    border: 1px solid var(--accent4);
+    border-radius: 3px;
+    padding: 8px 16px;
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--accent4);
+    z-index: 2000;
+    animation: notifIn 0.2s ease, notifOut 0.3s ease 2s forwards;
+    white-space: nowrap;
+    box-shadow: 0 0 16px rgba(16,185,129,0.4);
+  }
+  .notif.error { border-color: var(--accent5); color: var(--accent5); box-shadow: 0 0 16px rgba(239,68,68,0.4); }
+  .notif.warn { border-color: var(--accent3); color: var(--accent3); box-shadow: 0 0 16px rgba(245,158,11,0.4); }
+  @keyframes notifIn { from { opacity: 0; transform: translateX(-50%) translateY(-10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+  @keyframes notifOut { to { opacity: 0; transform: translateX(-50%) translateY(-10px); } }
+
+  /* CREATION SCREEN */
+  .creation-screen {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    text-align: center;
+    background: radial-gradient(ellipse at center, rgba(124,58,237,0.2) 0%, transparent 70%);
+  }
+  .creation-title {
+    font-family: var(--pixel);
+    font-size: 14px;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent);
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+  .creation-sub {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .creation-egg {
+    font-size: 80px;
+    margin-bottom: 16px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px var(--accent)); }
+    50% { transform: scale(1.08); filter: drop-shadow(0 0 30px var(--accent)); }
+  }
+
+  /* WORK ANIMATION */
+  .work-active {
+    animation: shake 0.15s infinite;
+  }
+  @keyframes shake {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-5deg) translateY(2px); }
+    75% { transform: rotate(5deg) translateY(2px); }
+  }
+
+  /* HISTORY */
+  .history-entry {
+    background: rgba(0,0,0,0.3);
+    border-left: 2px solid var(--accent5);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    border-radius: 0 2px 2px 0;
+  }
+  .history-entry.win { border-color: var(--accent4); }
+  .history-entry-title { font-family: var(--pixel); font-size: 7px; color: var(--text); }
+  .history-entry-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+  /* PROGRESS STARS */
+  .stars { color: var(--accent3); letter-spacing: 2px; }
+
+  /* COOLDOWN BADGE */
+  .cooldown {
+    font-family: var(--pixel);
+    font-size: 6px;
+    color: var(--accent5);
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 2px;
+    padding: 2px 6px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 10px 0;
+  }
+
+  .stat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 4px 8px;
+    font-family: var(--pixel);
+    font-size: 6px;
+    margin: 2px;
+  }
+
+  .code-box {
+    background: var(--bg);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    word-break: break-all;
+    color: var(--accent2);
+    margin-bottom: 8px;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .trait-chip {
+    display: inline-block;
+    background: rgba(124,58,237,0.15);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 2px;
+    padding: 2px 8px;
+    font-size: 13px;
+    color: var(--accent);
+    margin: 2px;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+// ===== ENCRYPTION =====
+const ENC_KEY = 'CreatureArena_v1_secret_key_2024';
+
+async function getKey() {
+  const raw = new TextEncoder().encode(ENC_KEY);
+  const keyMat = await crypto.subtle.importKey('raw', raw, { name: 'PBKDF2' }, false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: new TextEncoder().encode('salt_creature'), iterations: 10000, hash: 'SHA-256' },
+    keyMat, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+
+async function encrypt(data) {
+  const key = await getKey();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(data)));
+  const buf = new Uint8Array(iv.length + enc.byteLength);
+  buf.set(iv); buf.set(new Uint8Array(enc), iv.length);
+  return btoa(String.fromCharCode(...buf));
+}
+
+async function decrypt(b64) {
+  try {
+    const key = await getKey();
+    const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const iv = buf.slice(0, 12);
+    const data = buf.slice(12);
+    const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, data);
+    return JSON.parse(new TextDecoder().decode(dec));
+  } catch { return null; }
+}
+
+// ===== INDEXEDDB =====
+let db;
+async function initDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('CreatureArenaDB', 1);
+    req.onupgradeneeded = e => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('save')) d.createObjectStore('save', { keyPath: 'id' });
+    };
+    req.onsuccess = e => { db = e.target.result; res(); };
+    req.onerror = rej;
+  });
+}
+async function saveGame(state) {
+  const enc = await encrypt(state);
+  return new Promise((res, rej) => {
+    const tx = db.transaction('save', 'readwrite');
+    tx.objectStore('save').put({ id: 'main', data: enc });
+    tx.oncomplete = res; tx.onerror = rej;
+  });
+}
+async function loadGame() {
+  return new Promise(res => {
+    const tx = db.transaction('save', 'readonly');
+    const req = tx.objectStore('save').get('main');
+    req.onsuccess = async e => {
+      if (e.target.result) { const d = await decrypt(e.target.result.data); res(d); }
+      else res(null);
+    };
+    req.onerror = () => res(null);
+  });
+}
+
+// ===== CREATURE GENERATION =====
+const PREFIXES = ['Zara','Krix','Veln','Moru','Typh','Drak','Silon','Nexu','Caer','Brix','Feln','Vox','Pyra','Zyru','Kael','Omni','Thyx','Grex','Niru','Plex'];
+const SUFFIXES = ['ath','ox','ix','eon','ura','ax','el','ion','us','ar','yn','eth','oth','um','al','ex','on','is','yx','ur'];
+const TITLES = ['der Wilde','die Stürmerin','der Ewige','das Phantom','der Zerstörer','die Schattenjägerin','der Unsterbliche','das Wesen','der Koloss','die Legende'];
+const EMOJIS = ['🐲','🦄','🐙','🦊','🐺','🦁','🐯','🐻','🦋','🦅','🐬','🦖','🦕','🐉','🦑','🦈','🐊','🦏','🦛','🐘','🦞','🦀','🦩','🦚','🦜'];
+const TRAITS_POOL = ['Hartnäckig','Mutig','Listig','Schnell','Robust','Brilliant','Chaotisch','Präzise','Mystisch','Feurig','Kalt','Elektrisch','Giftig','Heilig','Dunkel'];
+const COLORS = ['#7c3aed','#06b6d4','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#a855f7'];
+
+function rng(max, min=0) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[rng(arr.length - 1)]; }
+
+function generateCreature() {
+  const name = pick(PREFIXES) + pick(SUFFIXES);
+  const emoji = pick(EMOJIS);
+  const color = pick(COLORS);
+  const traits = [];
+  const traitPool = [...TRAITS_POOL];
+  const traitCount = rng(3, 1);
+  for (let i = 0; i < traitCount; i++) {
+    const idx = rng(traitPool.length - 1);
+    traits.push(traitPool.splice(idx, 1)[0]);
+  }
+  // Base stats vary by creature
+  const base = { hp: rng(120, 80), atk: rng(18, 8), def: rng(15, 5), spd: rng(20, 8), int: rng(18, 6), lck: rng(12, 3) };
+  return {
+    name, emoji, color,
+    title: pick(TITLES),
+    traits,
+    stats: { ...base },
+    baseStats: { ...base },
+    // Needs
+    hunger: 80, happiness: 80, energy: 80, cleanliness: 80,
+    // Progress
+    level: 1, xp: 0, xpNext: 100, coins: 50,
+    // Training cooldowns
+    cooldowns: {},
+    // Inventory / upgrades
+    upgrades: [],
+    // Battle history
+    battleHistory: [],
+    // Timestamps
+    lastActive: Date.now(),
+    created: Date.now(),
+    // Total stats (base + boosts)
+    statBoosts: { hp: 0, atk: 0, def: 0, spd: 0, int: 0, lck: 0 }
+  };
+}
+
+function getEffectiveStats(c) {
+  return {
+    hp: c.stats.hp + (c.statBoosts?.hp || 0),
+    atk: c.stats.atk + (c.statBoosts?.atk || 0),
+    def: c.stats.def + (c.statBoosts?.def || 0),
+    spd: c.stats.spd + (c.statBoosts?.spd || 0),
+    int: c.stats.int + (c.statBoosts?.int || 0),
+    lck: c.stats.lck + (c.statBoosts?.lck || 0),
+  };
+}
+
+// ===== BATTLE CODE =====
+function generateBattleCode(creature) {
+  const s = getEffectiveStats(creature);
+  const payload = {
+    n: creature.name, e: creature.emoji,
+    l: creature.level, xp: creature.xp,
+    s, t: creature.traits,
+    ts: Date.now()
+  };
+  return btoa(JSON.stringify(payload)).replace(/=/g, '');
+}
+
+function parseBattleCode(code) {
+  try {
+    const padded = code + '=='.slice(0, (4 - code.length % 4) % 4);
+    return JSON.parse(atob(padded));
+  } catch { return null; }
+}
+
+// ===== BATTLE SIMULATION =====
+function simulateBattle(you, enemy) {
+  const ys = { ...you.s }; const es = { ...enemy.s };
+  let yHP = ys.hp * 10; let eHP = es.hp * 10;
+  const log = [];
+  let round = 0;
+  log.push({ type: 'system', text: `⚔️ KAMPF: ${you.n} vs ${enemy.n}` });
+  log.push({ type: 'system', text: `━━━━━━━━━━━━━━━━━` });
+
+  while (yHP > 0 && eHP > 0 && round < 50) {
+    round++;
+    // Determine who attacks first based on speed
+    const youFirst = ys.spd + rng(10) >= es.spd + rng(10);
+    const attackers = youFirst ? ['you', 'enemy'] : ['enemy', 'you'];
+    for (const atk of attackers) {
+      if (yHP <= 0 || eHP <= 0) break;
+      if (atk === 'you') {
+        const crit = Math.random() < (ys.lck / 100); 
+        let dmg = Math.max(1, ys.atk + rng(ys.int, 0) - Math.floor(es.def * 0.5));
+        if (crit) { dmg = Math.floor(dmg * 1.8); }
+        eHP -= dmg;
+        log.push({ type: 'you', text: `[R${round}] ${you.n}: ${dmg} Schaden${crit ? ' 💥KRIT!' : ''} (${Math.max(0,eHP)} HP)` });
+      } else {
+        const crit = Math.random() < (es.lck / 100);
+        let dmg = Math.max(1, es.atk + rng(es.int, 0) - Math.floor(ys.def * 0.5));
+        if (crit) { dmg = Math.floor(dmg * 1.8); }
+        yHP -= dmg;
+        log.push({ type: 'enemy', text: `[R${round}] ${enemy.n}: ${dmg} Schaden${crit ? ' 💥KRIT!' : ''} (${Math.max(0,yHP)} HP)` });
+      }
+    }
+  }
+  const won = yHP > eHP;
+  log.push({ type: 'system', text: `━━━━━━━━━━━━━━━━━` });
+  log.push({ type: won ? 'win' : 'lose', text: won ? `🏆 ${you.n} GEWINNT!` : `💀 ${enemy.n} GEWINNT!` });
+  return { won, log, rounds: round, yourFinalHP: Math.max(0, yHP), enemyFinalHP: Math.max(0, eHP) };
+}
+
+// ===== MOOD HELPER =====
+function getMood(c) {
+  const avg = (c.hunger + c.happiness + c.energy + c.cleanliness) / 4;
+  if (avg > 80) return { emoji: '😄', text: 'Glücklich' };
+  if (avg > 60) return { emoji: '😊', text: 'Zufrieden' };
+  if (avg > 40) return { emoji: '😐', text: 'Okay' };
+  if (avg > 20) return { emoji: '😟', text: 'Traurig' };
+  return { emoji: '😫', text: 'Elend' };
+}
+
+function getLevel(xp) {
+  return Math.floor(Math.sqrt(xp / 50)) + 1;
+}
+function xpForLevel(lvl) { return (lvl - 1) * (lvl - 1) * 50; }
+
+// ===== APP STATE =====
+let state = { creature: null, tab: 'home', modal: null, notifications: [], working: false, battleResult: null, battleEnemy: null };
+let saveTimer = null;
+
+function setState(partial) {
+  Object.assign(state, partial);
+  render();
+  scheduleSave();
+}
+
+function scheduleSave() {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    if (state.creature) saveGame(state.creature);
+  }, 1000);
+}
+
+// ===== NOTIFICATIONS =====
+function notify(msg, type = 'ok') {
+  const id = Date.now();
+  state.notifications.push({ id, msg, type });
+  render();
+  setTimeout(() => {
+    state.notifications = state.notifications.filter(n => n.id !== id);
+    render();
+  }, 2500);
+}
+
+// ===== TRAINING ACTIONS =====
+const COOLDOWNS_MS = { train_atk: 30000, train_def: 30000, train_spd: 25000, train_int: 28000, feed: 15000, play: 20000, work: 45000, clean: 10000, rest: 20000 };
+
+function canDo(action) {
+  const c = state.creature;
+  const cd = c.cooldowns[action];
+  if (!cd) return true;
+  return Date.now() - cd >= COOLDOWNS_MS[action];
+}
+function cdLeft(action) {
+  const c = state.creature;
+  const cd = c.cooldowns[action];
+  if (!cd) return 0;
+  return Math.max(0, COOLDOWNS_MS[action] - (Date.now() - cd));
+}
+function fmtCd(ms) {
+  if (ms <= 0) return '';
+  const s = Math.ceil(ms / 1000);
+  if (s < 60) return `${s}s`;
+  return `${Math.floor(s/60)}m ${s%60}s`;
+}
+
+function doAction(action) {
+  if (!canDo(action)) { notify('Noch nicht bereit!', 'warn'); return; }
+  const c = { ...state.creature };
+  c.cooldowns = { ...c.cooldowns, [action]: Date.now() };
+  let gainMsg = '';
+
+  if (action === 'train_atk') {
+    const gain = rng(4, 1);
+    c.stats = { ...c.stats, atk: c.stats.atk + gain };
+    gainMsg = `ATK +${gain}`;
+    c.energy = Math.max(0, c.energy - 10);
+    c.hunger = Math.max(0, c.hunger - 8);
+    c.xp += 15;
+  } else if (action === 'train_def') {
+    const gain = rng(4, 1);
+    c.stats = { ...c.stats, def: c.stats.def + gain };
+    gainMsg = `DEF +${gain}`;
+    c.energy = Math.max(0, c.energy - 10);
+    c.hunger = Math.max(0, c.hunger - 8);
+    c.xp += 15;
+  } else if (action === 'train_spd') {
+    const gain = rng(3, 1);
+    c.stats = { ...c.stats, spd: c.stats.spd + gain };
+    gainMsg = `SPD +${gain}`;
+    c.energy = Math.max(0, c.energy - 8);
+    c.hunger = Math.max(0, c.hunger - 6);
+    c.xp += 12;
+  } else if (action === 'train_int') {
+    const gain = rng(3, 1);
+    c.stats = { ...c.stats, int: c.stats.int + gain };
+    gainMsg = `INT +${gain}`;
+    c.energy = Math.max(0, c.energy - 7);
+    c.hunger = Math.max(0, c.hunger - 5);
+    c.xp += 12;
+  } else if (action === 'feed') {
+    c.hunger = Math.min(100, c.hunger + 30);
+    c.happiness = Math.min(100, c.happiness + 5);
+    if (c.coins < 5) { notify('Zu wenig Münzen!', 'error'); return; }
+    c.coins -= 5;
+    gainMsg = `Hunger +30`;
+  } else if (action === 'play') {
+    c.happiness = Math.min(100, c.happiness + 25);
+    c.energy = Math.max(0, c.energy - 10);
+    c.xp += 8;
+    const lckGain = rng(2, 0);
+    if (lckGain) { c.stats = { ...c.stats, lck: c.stats.lck + lckGain }; gainMsg = `Glück +${lckGain}`; }
+    else gainMsg = `Glück +0`;
+    gainMsg = `Happiness +25, LCK ${lckGain > 0 ? '+'+lckGain : '~'}`;
+  } else if (action === 'work') {
+    const earned = rng(40, 15);
+    c.coins += earned;
+    c.energy = Math.max(0, c.energy - 20);
+    c.happiness = Math.max(0, c.happiness - 5);
+    c.xp += 20;
+    gainMsg = `+${earned} 🪙 Münzen`;
+  } else if (action === 'clean') {
+    c.cleanliness = Math.min(100, c.cleanliness + 40);
+    c.happiness = Math.min(100, c.happiness + 5);
+    gainMsg = `Sauberkeit +40`;
+  } else if (action === 'rest') {
+    c.energy = Math.min(100, c.energy + 40);
+    gainMsg = `Energie +40`;
+  }
+
+  // Check level up
+  const newLevel = getLevel(c.xp);
+  if (newLevel > c.level) {
+    c.level = newLevel;
+    notify(`🎉 LEVEL UP! Level ${newLevel}!`, 'ok');
+    // Bonus stats on level up
+    c.stats = {
+      hp: c.stats.hp + rng(5, 2),
+      atk: c.stats.atk + rng(2, 0),
+      def: c.stats.def + rng(2, 0),
+      spd: c.stats.spd + rng(2, 0),
+      int: c.stats.int + rng(2, 0),
+      lck: c.stats.lck + rng(1, 0),
+    };
+  }
+
+  c.lastActive = Date.now();
+  setState({ creature: c });
+  if (gainMsg) notify(gainMsg, 'ok');
+}
+
+// Passive decay
+function applyDecay() {
+  if (!state.creature) return;
+  const c = { ...state.creature };
+  const elapsed = (Date.now() - (c.lastActive || Date.now())) / 1000 / 60; // minutes
+  if (elapsed < 1) return;
+  const decay = Math.floor(elapsed * 0.5);
+  c.hunger = Math.max(0, c.hunger - decay);
+  c.happiness = Math.max(0, c.happiness - Math.floor(decay * 0.5));
+  c.energy = Math.min(100, c.energy + Math.floor(decay * 0.3));
+  c.cleanliness = Math.max(0, c.cleanliness - Math.floor(decay * 0.3));
+  c.lastActive = Date.now();
+  setState({ creature: c });
+}
+
+// ===== SHOP =====
+const SHOP_ITEMS = [
+  { id: 'protein', icon: '🥩', name: 'Protein-Pack', desc: 'ATK +10, DEF +5 permanent', cost: 150, effect: (c) => { c.stats.atk += 10; c.stats.def += 5; } },
+  { id: 'speedshoes', icon: '👟', name: 'Turbo-Schuhe', desc: 'SPD +15 permanent', cost: 120, effect: (c) => { c.stats.spd += 15; } },
+  { id: 'brainpill', icon: '💊', name: 'Gehirn-Boost', desc: 'INT +12, LCK +5 permanent', cost: 130, effect: (c) => { c.stats.int += 12; c.stats.lck += 5; } },
+  { id: 'armor', icon: '🛡️', name: 'Titan-Rüstung', desc: 'DEF +20 permanent', cost: 200, effect: (c) => { c.stats.def += 20; } },
+  { id: 'elixir', icon: '✨', name: 'Lebens-Elixier', desc: 'HP +30 permanent', cost: 180, effect: (c) => { c.stats.hp += 30; } },
+  { id: 'luckcharm', icon: '🍀', name: 'Glücks-Amulett', desc: 'LCK +20 permanent', cost: 160, effect: (c) => { c.stats.lck += 20; } },
+  { id: 'megaboost', icon: '💎', name: 'Mega-Boost', desc: 'Alle Stats +10 permanent', cost: 500, effect: (c) => { for (const k of ['hp','atk','def','spd','int','lck']) c.stats[k] += 10; } },
+  { id: 'omnishard', icon: '🔮', name: 'Omni-Splitter', desc: 'Alle Stats +25 permanent', cost: 1200, effect: (c) => { for (const k of ['hp','atk','def','spd','int','lck']) c.stats[k] += 25; } },
+];
+
+// ===== RENDER =====
+function formatStat(val) { return Math.floor(val).toString().padStart(4, ' '); }
+function statColor(key) {
+  return { hp: '#10b981', atk: '#ef4444', def: '#3b82f6', spd: '#f59e0b', int: '#8b5cf6', lck: '#ec4899' }[key] || '#fff';
+}
+function statLabel(key) {
+  return { hp: 'HP', atk: 'ATK', def: 'DEF', spd: 'GES', int: 'INT', lck: 'GLK' }[key] || key;
+}
+
+function render() {
+  const root = document.getElementById('root');
+  if (!state.creature) { renderCreation(root); return; }
+  renderMain(root);
+}
+
+function renderCreation(root) {
+  root.innerHTML = `
+  <div class="screen">
+    <div class="creation-screen">
+      <div class="creation-egg">🥚</div>
+      <div class="creation-title">CREATURE<br>ARENA</div>
+      <div class="creation-sub">Dein einzigartiges Wesen wartet auf dich</div>
+      <button class="btn btn-purple" style="max-width:260px;font-size:9px;padding:16px;" onclick="window._startGame()">
+        ⚡ WESEN ERSCHAFFEN
+      </button>
+    </div>
+  </div>`;
+  window._startGame = () => {
+    const c = generateCreature();
+    setState({ creature: c, tab: 'home' });
+    saveGame(c);
+    notify(`${c.name} wurde erschaffen! 🎉`);
+  };
+}
+
+function renderMain(root) {
+  const c = state.creature;
+  const mood = getMood(c);
+  const eff = getEffectiveStats(c);
+  const xpCur = c.xp - xpForLevel(c.level);
+  const xpNxt = xpForLevel(c.level + 1) - xpForLevel(c.level);
+  const tabs = [
+    { id: 'home', icon: '🏠', label: 'HOME' },
+    { id: 'train', icon: '💪', label: 'TRAIN' },
+    { id: 'shop', icon: '🛒', label: 'SHOP' },
+    { id: 'battle', icon: '⚔️', label: 'KAMPF' },
+    { id: 'stats', icon: '📊', label: 'STATS' },
+  ];
+
+  let content = '';
+  if (state.tab === 'home') content = renderHome(c, mood, eff, xpCur, xpNxt);
+  else if (state.tab === 'train') content = renderTrain(c);
+  else if (state.tab === 'shop') content = renderShop(c);
+  else if (state.tab === 'battle') content = renderBattle(c);
+  else if (state.tab === 'stats') content = renderStats(c, eff);
+
+  const notifs = state.notifications.map(n => `<div class="notif ${n.type === 'error' ? 'error' : n.type === 'warn' ? 'warn' : ''}">${n.msg}</div>`).join('');
+
+  root.innerHTML = `
+  <div class="screen">
+    <div class="topbar">
+      <div class="topbar-title">🔮 ${c.name.toUpperCase()}</div>
+      <div class="topbar-level">LVL ${c.level}</div>
+      <div class="topbar-coins">🪙 ${c.coins}</div>
+    </div>
+    <div class="scroll">${content}</div>
+    <nav class="nav">
+      ${tabs.map(t => `
+        <button class="nav-btn ${state.tab === t.id ? 'active' : ''}" onclick="window._tab('${t.id}')">
+          <span class="nav-icon">${t.icon}</span>
+          ${t.label}
+        </button>`).join('')}
+    </nav>
+  </div>
+  ${notifs}
+  ${state.modal ? renderModal() : ''}`;
+
+  // Attach events
+  window._tab = (t) => setState({ tab: t });
+  attachEvents();
+}
+
+function renderHome(c, mood, eff, xpCur, xpNxt) {
+  const bars = Object.entries({ hunger: ['🍖', '#f97316'], happiness: ['😊', '#ec4899'], energy: ['⚡', '#eab308'], cleanliness: ['🚿', '#06b6d4'] });
+  return `
+  <div class="creature-stage">
+    <div class="creature-sprite" id="mainSprite" style="color:${c.color}" onclick="window._petCreature()">${c.emoji}</div>
+    <div class="creature-name">${c.name}</div>
+    <div class="creature-title">${c.title}</div>
+    <div class="creature-mood">${mood.emoji} ${mood.text}</div>
+  </div>
+
+  <div class="xp-bar-wrap">
+    <div class="xp-label">XP</div>
+    <div class="xp-bar"><div class="xp-fill" style="width:${Math.min(100,(xpCur/xpNxt)*100)}%"></div></div>
+    <div class="xp-text">${xpCur}/${xpNxt}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Zustand</div>
+    ${bars.map(([key, [icon, color]]) => `
+    <div class="stat-row">
+      <div class="stat-label">${icon} ${key === 'hunger' ? 'Hunger' : key === 'happiness' ? 'Glück' : key === 'energy' ? 'Energie' : 'Hygiene'}</div>
+      <div class="stat-bar"><div class="stat-fill" style="width:${c[key]}%;background:${color}"></div></div>
+      <div class="stat-val">${Math.floor(c[key])}</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="card-title">Schnellaktionen</div>
+    <div class="btn-grid">
+      <button class="btn btn-amber ${!canDo('feed') ? '' : ''}" onclick="window._do('feed')" ${!canDo('feed') ? 'disabled' : ''}>
+        🍖 Füttern${!canDo('feed') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('feed'))}</span>` : ''}
+      </button>
+      <button class="btn btn-cyan" onclick="window._do('play')" ${!canDo('play') ? 'disabled' : ''}>
+        🎮 Spielen${!canDo('play') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('play'))}</span>` : ''}
+      </button>
+      <button class="btn btn-green" onclick="window._do('work')" ${!canDo('work') ? 'disabled' : ''}>
+        ⚒️ Arbeiten${!canDo('work') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('work'))}</span>` : ''}
+      </button>
+      <button class="btn btn-purple" onclick="window._do('rest')" ${!canDo('rest') ? 'disabled' : ''}>
+        😴 Schlafen${!canDo('rest') ? `<br><span style="font-size:5px">${fmtCd(cdLeft('rest'))}</span>` : ''}
+      </button>
+    </div>
+    <button class="btn btn-cyan" onclick="window._do('clean')" ${!canDo('clean') ? 'disabled' : ''}>
+      🚿 Waschen ${!canDo('clean') ? fmtCd(cdLeft('clean')) : ''}
+    </button>
+  </div>
+
+  ${c.traits.length ? `
+  <div class="card">
+    <div class="card-title">Eigenschaften</div>
+    ${c.traits.map(t => `<span class="trait-chip">${t}</span>`).join('')}
+  </div>` : ''}`;
+}
+
+function renderTrain(c) {
+  const actions = [
+    { id: 'train_atk', icon: '⚔️', label: 'ATK Trainieren', desc: 'Erhöht Angriffskraft', color: 'btn-red' },
+    { id: 'train_def', icon: '🛡️', label: 'DEF Trainieren', desc: 'Erhöht Verteidigung', color: 'btn-cyan' },
+    { id: 'train_spd', icon: '💨', label: 'GES Trainieren', desc: 'Erhöht Geschwindigkeit', color: 'btn-amber' },
+    { id: 'train_int', icon: '🧠', label: 'INT Trainieren', desc: 'Erhöht Intelligenz', color: 'btn-purple' },
+  ];
+  return `
+  <div class="card">
+    <div class="card-title">⚡ Training</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Training kostet Energie & Hunger. Stats wachsen unbegrenzt!</div>
+    ${actions.map(a => `
+    <button class="btn ${a.color}" onclick="window._do('${a.id}')" ${!canDo(a.id) ? 'disabled' : ''}>
+      ${a.icon} ${a.label} ${!canDo(a.id) ? '· ' + fmtCd(cdLeft(a.id)) : ''}
+    </button>`).join('')}
+  </div>
+  <div class="card">
+    <div class="card-title">📈 Aktuelle Stats</div>
+    ${Object.entries(getEffectiveStats(c)).map(([k, v]) => `
+    <div class="stat-row">
+      <div class="stat-label">${statLabel(k)}</div>
+      <div class="stat-bar">
+        <div class="stat-fill" style="width:${Math.min(100,(v/300)*100)}%;background:${statColor(k)}"></div>
+      </div>
+      <div class="stat-val">${Math.floor(v)}</div>
+    </div>`).join('')}
+    <div style="font-size:11px;color:var(--muted);margin-top:6px">Kein Maximum — wachse für immer!</div>
+  </div>`;
+}
+
+function renderShop(c) {
+  return `
+  <div class="card">
+    <div class="card-title">🛒 Shop · 🪙 ${c.coins} Münzen</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Permanente Stat-Boosts für dein Wesen</div>
+    ${SHOP_ITEMS.map(item => `
+    <div class="shop-item" onclick="window._buy('${item.id}')">
+      <div class="shop-item-icon">${item.icon}</div>
+      <div class="shop-item-info">
+        <div class="shop-item-name">${item.name}</div>
+        <div class="shop-item-desc">${item.desc}</div>
+      </div>
+      <div class="shop-item-price">🪙${item.cost}</div>
+    </div>`).join('')}
+  </div>
+  ${c.upgrades.length ? `
+  <div class="card">
+    <div class="card-title">✅ Gekauft</div>
+    ${c.upgrades.map(u => `<div style="font-size:13px;color:var(--accent4)">✓ ${u}</div>`).join('')}
+  </div>` : ''}`;
+}
+
+function renderBattle(c) {
+  if (state.battleResult) return renderBattleResult();
+  return `
+  <div class="card">
+    <div class="card-title">⚔️ Kampfsystem</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Generiere deinen Kampfcode und teile ihn. Gib den Code des Gegners ein um zu kämpfen!</div>
+    
+    <button class="btn btn-purple" onclick="window._showCode()">
+      📋 Meinen Kampfcode anzeigen
+    </button>
+    <button class="btn btn-red" onclick="window._openFight()">
+      ⚔️ Gegner herausfordern
+    </button>
+  </div>
+
+  ${c.battleHistory.length ? `
+  <div class="card">
+    <div class="card-title">📜 Kampfhistorie</div>
+    ${c.battleHistory.slice().reverse().slice(0, 10).map(b => `
+    <div class="history-entry ${b.won ? 'win' : ''}">
+      <div class="history-entry-title">${b.won ? '🏆 SIEG' : '💀 NIEDERLAGE'} vs ${b.enemyName} ${b.enemyEmoji}</div>
+      <div class="history-entry-sub">Lvl ${b.enemyLevel} · +${b.xpGained} XP · ${new Date(b.time).toLocaleDateString('de')}</div>
+      <div class="history-entry-sub" style="font-size:11px;color:var(--muted)">
+        Gegner Stats: ATK ${b.enemyStats.atk} DEF ${b.enemyStats.def} SPD ${b.enemyStats.spd}
+      </div>
+    </div>`).join('')}
+  </div>` : ''}`;
+}
+
+function renderBattleResult() {
+  const { result, enemy } = state.battleResult;
+  return `
+  <div class="battle-screen">
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--accent5);text-align:center;margin-bottom:10px">⚔️ KAMPFBERICHT ⚔️</div>
+    <div class="battle-combatants">
+      <div class="combatant">
+        <div class="combatant-sprite">${state.creature.emoji}</div>
+        <div class="combatant-name">${state.creature.name}</div>
+        <div class="combatant-hp" style="color:var(--accent2)">HP: ${result.yourFinalHP}</div>
+      </div>
+      <div class="vs-text">VS</div>
+      <div class="combatant">
+        <div class="combatant-sprite">${enemy.e}</div>
+        <div class="combatant-name">${enemy.n}</div>
+        <div class="combatant-hp" style="color:var(--accent5)">HP: ${result.enemyFinalHP}</div>
+      </div>
+    </div>
+    <div class="battle-log" id="battleLog">
+      ${result.log.map(l => `<div class="log-${l.type}">${l.text}</div>`).join('')}
+    </div>
+    <button class="btn btn-purple" onclick="window._clearBattle()">← Zurück</button>
+  </div>`;
+}
+
+function renderStats(c, eff) {
+  return `
+  <div class="card">
+    <div class="card-title">🔮 ${c.name}</div>
+    <div style="text-align:center;font-size:48px;margin:10px 0">${c.emoji}</div>
+    <div style="text-align:center;font-size:13px;color:var(--muted)">${c.title}</div>
+    <hr class="section-divider">
+    <div class="grid-2">
+      <div><span class="stat-badge" style="border-color:var(--accent2)">LEVEL ${c.level}</span></div>
+      <div><span class="stat-badge" style="border-color:var(--accent3)">🪙 ${c.coins}</span></div>
+      <div><span class="stat-badge">XP: ${c.xp}</span></div>
+      <div><span class="stat-badge">🏆 ${c.battleHistory.filter(b=>b.won).length}W/${c.battleHistory.filter(b=>!b.won).length}L</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">📊 Kampfstats</div>
+    ${Object.entries(eff).map(([k, v]) => `
+    <div class="stat-row">
+      <div class="stat-label">${statLabel(k)}</div>
+      <div class="stat-bar">
+        <div class="stat-fill" style="width:${Math.min(100,(v/400)*100)}%;background:${statColor(k)}"></div>
+      </div>
+      <div class="stat-val">${Math.floor(v)}</div>
+    </div>`).join('')}
+  </div>
+  <div class="card">
+    <div class="card-title">🌟 Eigenschaften</div>
+    ${c.traits.length ? c.traits.map(t => `<span class="trait-chip">${t}</span>`).join('') : '<span style="color:var(--muted);font-size:13px">Keine Eigenschaften</span>'}
+  </div>
+  <div class="card">
+    <div class="card-title">📅 Info</div>
+    <div style="font-size:13px;color:var(--muted)">Erschaffen: ${new Date(c.created).toLocaleDateString('de')}</div>
+    <div style="font-size:13px;color:var(--muted)">Kämpfe: ${c.battleHistory.length}</div>
+    <div style="font-size:13px;color:var(--muted)">Upgrades: ${c.upgrades.length}</div>
+  </div>
+  <div style="margin-bottom:60px"></div>`;
+}
+
+function renderModal() {
+  const m = state.modal;
+  if (m.type === 'code') {
+    const code = generateBattleCode(state.creature);
+    return `
+    <div class="modal-overlay" onclick="window._closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-title">📋 Dein Kampfcode</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Schicke diesen Code deinem Gegner!</div>
+        <div class="code-box">${code}</div>
+        <button class="btn btn-purple" onclick="window._copyCode('${code}')">📋 Code kopieren</button>
+        <button class="btn btn-cyan" onclick="window._closeModal()">✓ Fertig</button>
+      </div>
+    </div>`;
+  }
+  if (m.type === 'fight') {
+    return `
+    <div class="modal-overlay">
+      <div class="modal">
+        <div class="modal-title">⚔️ Gegner herausfordern</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px">Füge den Kampfcode deines Gegners ein:</div>
+        <textarea id="enemyCode" rows="4" placeholder="Kampfcode hier einfügen..."></textarea>
+        <button class="btn btn-red" onclick="window._startFight()">⚔️ KAMPF STARTEN!</button>
+        <button class="btn btn-cyan" onclick="window._closeModal()">Abbrechen</button>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+
+// ===== EVENTS =====
+function attachEvents() {
+  window._do = doAction;
+  window._tab = (t) => setState({ tab: t });
+  window._petCreature = () => {
+    const s = document.getElementById('mainSprite');
+    if (s) { s.style.transform = 'scale(1.3) rotate(10deg)'; setTimeout(() => s.style.transform = '', 300); }
+    notify(`${state.creature.name} mag dich! 💕`);
+  };
+  window._showCode = () => setState({ modal: { type: 'code' } });
+  window._openFight = () => setState({ modal: { type: 'fight' } });
+  window._closeModal = () => setState({ modal: null });
+  window._copyCode = (code) => {
+    navigator.clipboard?.writeText(code).then(() => notify('Code kopiert! 📋')).catch(() => notify('Manuell kopieren!', 'warn'));
+  };
+  window._clearBattle = () => setState({ battleResult: null });
+  window._buy = (itemId) => {
+    const item = SHOP_ITEMS.find(i => i.id === itemId);
+    if (!item) return;
+    const c = { ...state.creature };
+    if (c.coins < item.cost) { notify('Nicht genug Münzen!', 'error'); return; }
+    c.coins -= item.cost;
+    c.stats = { ...c.stats };
+    item.effect(c);
+    c.upgrades = [...(c.upgrades || []), item.name];
+    setState({ creature: c });
+    notify(`${item.icon} ${item.name} gekauft!`);
+  };
+  window._startFight = () => {
+    const code = document.getElementById('enemyCode')?.value.trim();
+    if (!code) { notify('Kein Code eingegeben!', 'error'); return; }
+    const enemy = parseBattleCode(code);
+    if (!enemy || !enemy.n || !enemy.s) { notify('Ungültiger Code!', 'error'); return; }
+
+    const you = { n: state.creature.name, e: state.creature.emoji, l: state.creature.level, s: getEffectiveStats(state.creature) };
+    const result = simulateBattle(you, enemy);
+
+    const c = { ...state.creature };
+    const xpGained = result.won ? rng(50, 20) + enemy.l * 5 : rng(10, 5);
+    c.xp += xpGained;
+    const newLevel = getLevel(c.xp);
+    if (newLevel > c.level) { c.level = newLevel; }
+
+    c.battleHistory = [...(c.battleHistory || []), {
+      won: result.won, time: Date.now(),
+      enemyName: enemy.n, enemyEmoji: enemy.e, enemyLevel: enemy.l,
+      enemyStats: enemy.s, xpGained, rounds: result.rounds
+    }];
+
+    setState({ creature: c, modal: null, battleResult: { result, enemy }, tab: 'battle' });
+    setTimeout(() => {
+      const log = document.getElementById('battleLog');
+      if (log) log.scrollTop = log.scrollHeight;
+    }, 100);
+  };
+}
+
+// ===== COOLDOWN TICKER =====
+setInterval(() => {
+  if (state.creature && state.tab === 'home' || state.tab === 'train') render();
+}, 5000);
+
+// ===== INIT =====
+(async () => {
+  await initDB();
+  const saved = await loadGame();
+  if (saved) {
+    state.creature = saved;
+    applyDecay();
+  }
+  render();
+})();
+</script>
+</body>
+</html>
